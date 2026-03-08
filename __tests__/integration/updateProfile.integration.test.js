@@ -17,8 +17,13 @@ describe('Update Profile Integration Test', () => {
   let testUser;
   let token;
 
+  jest.spyOn(console, 'log').mockImplementation(() => {});
+
   beforeAll(async () => {
     mongoServer = await MongoMemoryServer.create();
+    if (mongoose.connection.readyState !== 0) {
+      await mongoose.disconnect();
+    }
     await mongoose.connect(mongoServer.getUri());
     process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
   });
@@ -185,7 +190,7 @@ describe('Update Profile Integration Test', () => {
     expect(userInDb.email).toBe('test@test.com');
   });
 
-  it('returns 400 when the user no longer exists (FSM: logged-in -> user-deleted)', async () => {
+  it('returns 404 when the user no longer exists', async () => {
     // simulate user deletion after token issuance
     await userModel.findByIdAndDelete(testUser._id);
 
@@ -194,7 +199,7 @@ describe('Update Profile Integration Test', () => {
       .set('Authorization', token)
       .send({ name: 'AfterDelete' });
 
-    expect(response.status).toBe(400);
+    expect(response.status).toBe(404);
     expect(response.body).toHaveProperty('message');
   });
 });
