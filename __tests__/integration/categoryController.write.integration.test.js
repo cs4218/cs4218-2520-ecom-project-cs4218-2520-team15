@@ -82,6 +82,21 @@ describe("createCategoryController function integration with MongoDB + Slugify",
       message: "Category already exists",
     });
   });
+
+  it("should return error if MongoDB has issues", async () => {
+    const mockReq = { body: { name: { value: "Category A" } } };
+
+    await createCategoryController(mockReq, mockRes);
+
+    expect(await categoryModel.countDocuments()).toEqual(1);
+    expect(mockRes.status).toHaveBeenCalledWith(500);
+    expect(mockRes.send).toHaveBeenCalledWith(
+      expect.objectContaining({
+        success: false,
+        message: "Error in creating category",
+      }),
+    );
+  });
 });
 
 describe("updateCategoryController function integration with MongoDB + Slugify", () => {
@@ -162,6 +177,23 @@ describe("updateCategoryController function integration with MongoDB + Slugify",
       success: false,
       message: "Category does not exist",
     });
+  });
+
+  it("should return error if MongoDB has issues", async () => {
+    const mockReq = {
+      params: { id: existingCategoryId },
+      body: { name: { value: "Category A" } },
+    };
+
+    await updateCategoryController(mockReq, mockRes);
+
+    expect(mockRes.status).toHaveBeenCalledWith(500);
+    expect(mockRes.send).toHaveBeenCalledWith(
+      expect.objectContaining({
+        success: false,
+        message: "Error in updating category",
+      }),
+    );
   });
 });
 
@@ -248,5 +280,19 @@ describe("deleteCategoryController function integration with MongoDB + Slugify",
       success: false,
       message: "Unable to delete category that contains products",
     });
+  });
+
+  it("should return error if MongoDB has issues", async () => {
+    const mockReq = { params: { id: "invalid-id" } };
+
+    await deleteCategoryController(mockReq, mockRes);
+
+    expect(mockRes.status).toHaveBeenCalledWith(500);
+    expect(mockRes.send).toHaveBeenCalledWith(
+      expect.objectContaining({
+        success: false,
+        message: "Error in deleting category",
+      }),
+    );
   });
 });
