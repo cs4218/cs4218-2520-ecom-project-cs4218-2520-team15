@@ -6,9 +6,11 @@ import { MongoMemoryServer } from "mongodb-memory-server";
 import mongoose from "mongoose";
 import {
   createCategoryController,
+  deleteCategoryController,
   updateCategoryController,
 } from "../../controllers/categoryController";
 import categoryModel from "../../models/categoryModel";
+import productModel from "../../models/productModel";
 
 describe("createCategoryController function integration with MongoDB + Slugify", () => {
   const mockRes = {
@@ -159,6 +161,92 @@ describe("updateCategoryController function integration with MongoDB + Slugify",
     expect(mockRes.send).toHaveBeenCalledWith({
       success: false,
       message: "Category does not exist",
+    });
+  });
+});
+
+describe("deleteCategoryController function integration with MongoDB + Slugify", () => {
+  const mockRes = {
+    status: jest.fn().mockReturnThis(),
+    send: jest.fn().mockReturnThis(),
+  };
+  let mongoServer;
+  let existingCategoryId;
+
+  beforeAll(async () => {
+    mongoServer = await MongoMemoryServer.create();
+    await mongoose.connect(mongoServer.getUri());
+    jest.spyOn(console, "log").mockImplementation(() => {});
+  });
+
+  beforeEach(async () => {
+    const category = await new categoryModel({
+      name: "Category X",
+      slug: "category-x",
+    }).save();
+    existingCategoryId = category._id;
+  });
+
+  afterAll(async () => {
+    await mongoose.disconnect();
+    await mongoServer.stop();
+    jest.restoreAllMocks();
+  });
+
+  afterEach(async () => {
+    await categoryModel.deleteMany({});
+    await productModel.deleteMany({});
+    jest.clearAllMocks();
+  });
+
+  it("should delete category correctly", async () => {
+    const mockReq = { params: { id: existingCategoryId } };
+
+    await deleteCategoryController(mockReq, mockRes);
+
+    expect(await categoryModel.countDocuments()).toEqual(0);
+    expect(mockRes.status).toHaveBeenCalledWith(200);
+    expect(mockRes.send).toHaveBeenCalledWith({
+      success: true,
+      message: "Category deleted successfully",
+    });
+  });
+
+  it("should return ok if category does not exist", async () => {
+    const mockReq = { params: { id: new mongoose.Types.ObjectId() } };
+
+    await deleteCategoryController(mockReq, mockRes);
+
+    expect(await categoryModel.countDocuments()).toEqual(1);
+    expect(mockRes.status).toHaveBeenCalledWith(200);
+    expect(mockRes.send).toHaveBeenCalledWith({
+      success: true,
+      message: "Category deleted successfully",
+    });
+  });
+
+  it("should return error if category has products", async () => {
+    const mockReq = { params: { id: existingCategoryId } };
+    await productModel({
+      name: "Product A",
+      slug: "product-a",
+      description: "Some fake product",
+      price: 9.99,
+      category: existingCategoryId,
+      quantity: 100,
+      photo: {
+        data: Buffer.from("fake-file"),
+        contentType: "image/png",
+      },
+    }).save();
+
+    await deleteCategoryController(mockReq, mockRes);
+
+    expect(await categoryModel.countDocuments()).toEqual(1);
+    expect(mockRes.status).toHaveBeenCalledWith(400);
+    expect(mockRes.send).toHaveBeenCalledWith({
+      success: false,
+      message: "Unable to delete category that contains products",
     });
   });
 });
