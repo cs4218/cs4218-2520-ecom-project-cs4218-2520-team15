@@ -67,9 +67,56 @@ describe('Update Profile Integration Test', () => {
     expect(userInDb.phone).toBe('99999999');
   });
 
+  it('should not update when no fields are changed', async () => {
+    const response = await request(app)
+      .put('/api/v1/auth/profile')
+      .set('Authorization', token)
+      .send({
+        name: 'Original Name',
+        email: 'test@test.com',
+        password: 'password123',
+        phone: '12345678',
+        address: 'Old Address',
+      });
+
+    expect(response.status).toBe(200);
+    expect(response.body.success).toBe(true);
+    expect(response.body.updatedUser.name).toBe('Original Name');
+
+    const userInDb = await userModel.findById(testUser._id);
+    expect(userInDb.name).toBe('Original Name');
+  });
+
   it('should fail if the authorization token is missing', async () => {
     const response = await request(app)
       .put('/api/v1/auth/profile')
+      .send({ name: 'Unauthorised' });
+
+    expect(response.status).toBe(401);
+  });
+
+  it('should return 401 with an expired token', async () => {
+    const expiredToken = JWT.sign(
+        { _id: testUser._id }, 
+        process.env.JWT_SECRET, 
+        { expiresIn: '1ms' }
+    );
+    await new Promise((r) => setTimeout(r, 10));
+
+    const response = await request(app)
+      .put('/api/v1/auth/profile')
+      .set('Authorization', expiredToken)
+      .send({ name: 'Unauthorised' });
+
+    expect(response.status).toBe(401);
+  });
+
+  it('should return 401 with an invalid token', async () => {
+    const invalidToken = token + 'invalid';
+    
+    const response = await request(app)
+      .put('/api/v1/auth/profile')
+      .set('Authorization', invalidToken)
       .send({ name: 'Unauthorised' });
 
     expect(response.status).toBe(401);
@@ -138,16 +185,16 @@ describe('Update Profile Integration Test', () => {
     expect(userInDb.email).toBe('test@test.com');
   });
 
-//   it('returns 400 when the user no longer exists (FSM: logged-in -> user-deleted)', async () => {
-//     // simulate user deletion after token issuance
-//     await userModel.findByIdAndDelete(testUser._id);
+  it('returns 400 when the user no longer exists (FSM: logged-in -> user-deleted)', async () => {
+    // simulate user deletion after token issuance
+    await userModel.findByIdAndDelete(testUser._id);
 
-//     const response = await request(app)
-//       .put('/api/v1/auth/profile')
-//       .set('Authorization', token)
-//       .send({ name: 'AfterDelete' });
+    const response = await request(app)
+      .put('/api/v1/auth/profile')
+      .set('Authorization', token)
+      .send({ name: 'AfterDelete' });
 
-//     expect(response.status).toBe(400);
-//     expect(response.body).toHaveProperty('message');
-//   });
+    expect(response.status).toBe(400);
+    expect(response.body).toHaveProperty('message');
+  });
 });
