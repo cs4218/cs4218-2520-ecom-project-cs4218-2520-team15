@@ -74,5 +74,16 @@ describe("Category model", () => {
     expect(found).not.toBeNull();
     expect(found.slug).toBe("mixedcase-slug");
   });
+
+  test("throws validation error when name is missing", async () => {
+    // Arrange
+    const invalidCategory = { slug: "test-slug" };
+    // Act
+    const createPromise = Category.create(invalidCategory);
+    // Assert
+    await expect(createPromise)
+      .rejects
+      .toThrow(mongoose.Error.ValidationError);
+  });
 });
 
