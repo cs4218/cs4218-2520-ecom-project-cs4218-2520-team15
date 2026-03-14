@@ -6,9 +6,11 @@ import { MongoMemoryServer } from "mongodb-memory-server";
 import mongoose from "mongoose";
 import {
   createProductController,
+  deleteProductController,
   updateProductController,
 } from "../../controllers/productController";
 import categoryModel from "../../models/categoryModel";
+import orderModel from "../../models/orderModel";
 import productModel from "../../models/productModel";
 
 describe("createProductController function integration with MongoDB + Slugify + fs", () => {
@@ -355,6 +357,96 @@ describe("updateProductController function integration with MongoDB + Slugify + 
       expect.objectContaining({
         success: false,
         message: "Error in updating product",
+      }),
+    );
+  });
+});
+
+describe("deleteProductController function integration with MongoDB", () => {
+  const mockRes = {
+    status: jest.fn().mockReturnThis(),
+    send: jest.fn().mockReturnThis(),
+  };
+  let mongoServer, product;
+
+  beforeAll(async () => {
+    mongoServer = await MongoMemoryServer.create();
+    await mongoose.connect(mongoServer.getUri());
+    jest.spyOn(console, "log").mockImplementation(() => {});
+  });
+
+  beforeEach(async () => {
+    const category = await new categoryModel({
+      name: "Category X",
+      slug: "category-x",
+    }).save();
+    product = await new productModel({
+      name: "Existing Laptop",
+      slug: "existing-laptop",
+      description: "An existing laptop",
+      price: 9.99,
+      category: category._id,
+      quantity: 100,
+      photo: {
+        data: Buffer.from("fake-file"),
+        contentType: "image/png",
+      },
+      shipping: false,
+    }).save();
+  });
+
+  afterAll(async () => {
+    await mongoose.disconnect();
+    await mongoServer.stop();
+    jest.restoreAllMocks();
+  });
+
+  afterEach(async () => {
+    await productModel.deleteMany({});
+    await categoryModel.deleteMany({});
+    await orderModel.deleteMany({});
+    jest.clearAllMocks();
+  });
+
+  it("should delete product correctly", async () => {
+    const mockReq = { params: { pid: product._id } };
+
+    await deleteProductController(mockReq, mockRes);
+
+    expect(mockRes.status).toHaveBeenCalledWith(200);
+    expect(mockRes.send).toHaveBeenCalledWith({
+      success: true,
+      message: "Product deleted successfully",
+    });
+  });
+
+  it("should return error if product has orders", async () => {
+    const mockReq = { params: { pid: product._id } };
+    await new orderModel({
+      products: [product._id],
+      payment: {},
+      buyer: new mongoose.Types.ObjectId(),
+    }).save();
+
+    await deleteProductController(mockReq, mockRes);
+
+    expect(mockRes.status).toHaveBeenCalledWith(400);
+    expect(mockRes.send).toHaveBeenCalledWith({
+      success: false,
+      message: "Unable to delete product with orders",
+    });
+  });
+
+  it("should return error if server issues", async () => {
+    const mockReq = { params: { pid: "invalid-id" } };
+
+    await deleteProductController(mockReq, mockRes);
+
+    expect(mockRes.status).toHaveBeenCalledWith(500);
+    expect(mockRes.send).toHaveBeenCalledWith(
+      expect.objectContaining({
+        success: false,
+        message: "Error in deleting product",
       }),
     );
   });
