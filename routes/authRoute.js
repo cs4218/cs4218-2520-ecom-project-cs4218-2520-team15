@@ -9,6 +9,7 @@ import {
   getAllOrdersController,
   getAllUsersController,
   orderStatusController,
+  deleteAllOrdersController
 } from "../controllers/authController.js";
 import { isAdmin, requireSignIn } from "../middlewares/authMiddleware.js";
 
@@ -48,6 +49,9 @@ router.get("/all-orders", requireSignIn, isAdmin, getAllOrdersController);
 
 // all users (admin)
 router.get("/users", requireSignIn, isAdmin, getAllUsersController);
+
+// Delete all orders (for testing)
+router.delete("/orders", requireSignIn, deleteAllOrdersController);
 
 // order status update
 router.put(

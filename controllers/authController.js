@@ -278,3 +278,21 @@ export const getAllUsersController = async (req, res) => {
     });
   }
 };
+
+// delete all orders for current user (for testing)
+export const deleteAllOrdersController = async (req, res) => {
+  try {
+    await orderModel.deleteMany({ buyer: req.user._id });
+    res.status(200).send({
+      success: true,
+      message: "All orders deleted successfully",
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({
+      success: false,
+      message: "Error while deleting orders",
+      error,
+    });
+  }
+};
