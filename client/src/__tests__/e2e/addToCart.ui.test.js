@@ -1,17 +1,6 @@
-// Qin Xu Tan, AXXXXXXX
-// E2E Test: Add to cart from multiple entry points
-// Tests the complete flow: Login → Add from Home → Add from Category → Add from Product Details → Verify Cart → Remove Item
-// 
-// Files exercised:
-// - client/src/components/Header.js
-// - client/src/components/Layout.js
-// - client/src/pages/HomePage.js
-// - client/src/hooks/useCategory.js
-// - client/src/pages/Categories.js
-// - client/src/pages/CategoryProduct.js
-// - client/src/pages/ProductDetails.js
-// - client/src/context/cart.js
-// - client/src/pages/CartPage.js
+/* Name: Tan Qin Xu
+ * Student No: A0213002J
+ */
 
 import { test, expect } from '@playwright/test';
 
