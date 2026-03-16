@@ -102,7 +102,7 @@ describe("Integration Tests for Viewing Product Details (Single + Category)", ()
   // ============================================================
   // 1. getSingleProductController
   // ============================================================
-  describe("getSingleProductController function integration with MongoDB + Slugify", () => {
+  describe("getSingleProductController function integration with mongo server", () => {
     it("should fetch a single product successfully", async () => {
       req.params.slug = "iphone-15";
       await getSingleProductController(req, res);
@@ -155,7 +155,7 @@ describe("Integration Tests for Viewing Product Details (Single + Category)", ()
   // ============================================================
   // 2. productPhotoController
   // ============================================================
-  describe("productPhotoController function integration with MongoDB + Slugify", () => {
+  describe("productPhotoController function integration with mongo server", () => {
     it("should fetch product photo successfully", async () => {
       req.params.pid = mock_product0._id;
       await productPhotoController(req, res);
@@ -211,7 +211,7 @@ describe("Integration Tests for Viewing Product Details (Single + Category)", ()
   // ============================================================
   // 3. relatedProductController
   // ============================================================
-  describe("relatedProductController function integration with MongoDB + Slugify", () => {
+  describe("relatedProductController function integration with mongo server", () => {
     it("should fetch related products successfully", async () => {
       req.params = {
         pid: mock_product0._id,
@@ -275,7 +275,7 @@ describe("Integration Tests for Viewing Product Details (Single + Category)", ()
   // ============================================================
   // 4. productCategoryController
   // ============================================================
-  describe("productCategoryController function integration with MongoDB + Slugify", () => {
+  describe("productCategoryController function integration with mongo server", () => {
     it("should fetch products by category successfully with pagination", async () => {
       req.params = { slug: "phones", page: "1" };
       await productCategoryController(req, res);
