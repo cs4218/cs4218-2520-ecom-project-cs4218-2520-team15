@@ -63,7 +63,7 @@ describe("Integration Tests for Viewing Product Details (Single + Category)", ()
 
     mock_product2 = await new productModel({
       name: "Hunger Games Book",
-      slug: "hunger-games-nook",
+      slug: "hunger-games-book",
       description: "Hunger Games book (touch grass and read a book)",
       price: 15.99,
       category: books_category._id,
