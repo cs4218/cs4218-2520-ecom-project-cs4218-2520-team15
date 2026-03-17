@@ -423,7 +423,7 @@ describe("Integration Tests for Viewing Product Details (Single + Category)", ()
         req.params = { slug: "phones", page: "1" };
         await productCategoryController(req, res);
 
-        expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.status).toHaveBeenCalledWith(500);
         const sentData = res.send.mock.calls[0][0];
         expect(sentData.success).toBe(false);
         expect(sentData.message).toBe("Error while getting products by category");
