@@ -446,11 +446,7 @@ describe("updateCategoryController function", () => {
   });
 });
 
-describe("deleteCategoryController function integration with MongoDB + Slugify", () => {
-  const mockRes = {
-    status: jest.fn().mockReturnThis(),
-    send: jest.fn().mockReturnThis(),
-  };
+describe("deleteCategoryController function", () => {
   let mongoServer;
   let existingCategoryId;
 
@@ -477,71 +473,194 @@ describe("deleteCategoryController function integration with MongoDB + Slugify",
   afterEach(async () => {
     await categoryModel.deleteMany({});
     await productModel.deleteMany({});
-    jest.clearAllMocks();
   });
 
-  it("should delete category correctly", async () => {
-    const mockReq = { params: { id: existingCategoryId } };
+  describe("integration with MongoDB", () => {
+    const mockRes = {
+      status: jest.fn().mockReturnThis(),
+      send: jest.fn().mockReturnThis(),
+    };
 
-    await deleteCategoryController(mockReq, mockRes);
-
-    expect(await categoryModel.countDocuments()).toEqual(0);
-    expect(mockRes.status).toHaveBeenCalledWith(200);
-    expect(mockRes.send).toHaveBeenCalledWith({
-      success: true,
-      message: "Category deleted successfully",
+    afterEach(async () => {
+      jest.clearAllMocks();
     });
-  });
 
-  it("should return ok if category does not exist", async () => {
-    const mockReq = { params: { id: new mongoose.Types.ObjectId() } };
+    it("should delete category correctly", async () => {
+      const mockReq = { params: { id: existingCategoryId } };
 
-    await deleteCategoryController(mockReq, mockRes);
+      await deleteCategoryController(mockReq, mockRes);
 
-    expect(await categoryModel.countDocuments()).toEqual(1);
-    expect(mockRes.status).toHaveBeenCalledWith(200);
-    expect(mockRes.send).toHaveBeenCalledWith({
-      success: true,
-      message: "Category deleted successfully",
+      expect(await categoryModel.countDocuments()).toEqual(0);
+      expect(mockRes.status).toHaveBeenCalledWith(200);
+      expect(mockRes.send).toHaveBeenCalledWith({
+        success: true,
+        message: "Category deleted successfully",
+      });
     });
-  });
 
-  it("should return error if category has products", async () => {
-    const mockReq = { params: { id: existingCategoryId } };
-    await productModel({
-      name: "Product A",
-      slug: "product-a",
-      description: "Some fake product",
-      price: 9.99,
-      category: existingCategoryId,
-      quantity: 100,
-      photo: {
-        data: Buffer.from("fake-file"),
-        contentType: "image/png",
-      },
-    }).save();
+    it("should return ok if category does not exist", async () => {
+      const mockReq = { params: { id: new mongoose.Types.ObjectId() } };
 
-    await deleteCategoryController(mockReq, mockRes);
+      await deleteCategoryController(mockReq, mockRes);
 
-    expect(await categoryModel.countDocuments()).toEqual(1);
-    expect(mockRes.status).toHaveBeenCalledWith(400);
-    expect(mockRes.send).toHaveBeenCalledWith({
-      success: false,
-      message: "Unable to delete category that contains products",
+      expect(await categoryModel.countDocuments()).toEqual(1);
+      expect(mockRes.status).toHaveBeenCalledWith(200);
+      expect(mockRes.send).toHaveBeenCalledWith({
+        success: true,
+        message: "Category deleted successfully",
+      });
     });
-  });
 
-  it("should return error if MongoDB has issues", async () => {
-    const mockReq = { params: { id: "invalid-id" } };
+    it("should return error if category has products", async () => {
+      const mockReq = { params: { id: existingCategoryId } };
+      await productModel({
+        name: "Product A",
+        slug: "product-a",
+        description: "Some fake product",
+        price: 9.99,
+        category: existingCategoryId,
+        quantity: 100,
+        photo: {
+          data: Buffer.from("fake-file"),
+          contentType: "image/png",
+        },
+      }).save();
 
-    await deleteCategoryController(mockReq, mockRes);
+      await deleteCategoryController(mockReq, mockRes);
 
-    expect(mockRes.status).toHaveBeenCalledWith(500);
-    expect(mockRes.send).toHaveBeenCalledWith(
-      expect.objectContaining({
+      expect(await categoryModel.countDocuments()).toEqual(1);
+      expect(mockRes.status).toHaveBeenCalledWith(400);
+      expect(mockRes.send).toHaveBeenCalledWith({
         success: false,
-        message: "Error in deleting category",
-      }),
-    );
+        message: "Unable to delete category that contains products",
+      });
+    });
+
+    it("should return error if MongoDB has issues", async () => {
+      const mockReq = { params: { id: "invalid-id" } };
+
+      await deleteCategoryController(mockReq, mockRes);
+
+      expect(mockRes.status).toHaveBeenCalledWith(500);
+      expect(mockRes.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          success: false,
+          message: "Error in deleting category",
+        }),
+      );
+    });
+  });
+
+  describe("integration with HTTP", () => {
+    let user, admin, authToken;
+
+    const act = async ({ id = existingCategoryId, token = authToken } = {}) => {
+      return await request(app)
+        .delete(`/api/v1/category/delete-category/${id}`)
+        .set("Authorization", token);
+    };
+
+    beforeAll(async () => {
+      user = await new userModel({
+        name: "user",
+        email: "user@example.com",
+        password: await hashPassword("password"),
+        phone: "81234567",
+        address: "123 Jane Street",
+        answer: "chicken",
+        role: 0,
+      }).save();
+      admin = await new userModel({
+        name: "admin",
+        email: "admin@example.com",
+        password: await hashPassword("password"),
+        phone: "91234567",
+        address: "456 Jane Street",
+        answer: "pork",
+        role: 1,
+      }).save();
+      authToken = JWT.sign({ _id: admin._id }, process.env.JWT_SECRET, {
+        expiresIn: "1d",
+      });
+    });
+
+    afterAll(async () => {
+      await userModel.deleteMany({});
+    });
+
+    it("should delete category correctly", async () => {
+      const response = await act();
+
+      expect(response.status).toEqual(200);
+      expect(response.body.success).toEqual(true);
+    });
+
+    it("should return ok if category does not exist", async () => {
+      const response = await act({ id: new mongoose.Types.ObjectId() });
+
+      expect(response.status).toEqual(200);
+      expect(response.body.success).toEqual(true);
+    });
+
+    it("should return error if category has products", async () => {
+      await productModel({
+        name: "Product A",
+        slug: "product-a",
+        description: "Some fake product",
+        price: 9.99,
+        category: existingCategoryId,
+        quantity: 100,
+        photo: {
+          data: Buffer.from("fake-file"),
+          contentType: "image/png",
+        },
+      }).save();
+
+      const response = await act();
+
+      expect(response.status).toEqual(400);
+      expect(response.body.success).toEqual(false);
+    });
+
+    it("should return error if MongoDB has issues", async () => {
+      const response = await act({ id: "invalid-id" });
+
+      expect(response.status).toEqual(500);
+      expect(response.body.success).toEqual(false);
+    });
+
+    it("should return error if user is not admin", async () => {
+      const token = JWT.sign({ _id: user._id }, process.env.JWT_SECRET, {
+        expiresIn: "5m",
+      });
+
+      const response = await act({ token });
+
+      expect(response.status).toEqual(401);
+      expect(response.body.success).toEqual(false);
+    });
+
+    it("should return error if authorization token is invalid", async () => {
+      const response = await act({ token: "invalid-token" });
+
+      expect(response.status).toEqual(401);
+      expect(response.body.success).toEqual(false);
+    });
+
+    it("should return error if authorization token is expired", async () => {
+      const expiredToken = JWT.sign(
+        { _id: admin._id },
+        process.env.JWT_SECRET,
+        {
+          expiresIn: "1ms",
+        },
+      );
+      await new Promise((resolve) => setTimeout(resolve, 1));
+
+      const response = await act({ token: expiredToken });
+
+      expect(response.status).toEqual(401);
+      expect(response.body.success).toEqual(false);
+    });
   });
 });
