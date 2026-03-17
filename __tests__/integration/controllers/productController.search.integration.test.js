@@ -6,9 +6,9 @@ import { MongoMemoryServer } from "mongodb-memory-server";
 import mongoose from "mongoose";
 import {
     searchProductController
-} from "../../controllers/productController.js";
-import productModel from "../../models/productModel.js";
-import categoryModel from "../../models/categoryModel.js";
+} from "../../../controllers/productController.js";
+import productModel from "../../../models/productModel.js";
+import categoryModel from "../../../models/categoryModel.js";
 
 describe("Integration Tests for Searching Products", () => {
   let mongoServer;

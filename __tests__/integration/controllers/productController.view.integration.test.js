@@ -9,9 +9,9 @@ import {
     productPhotoController,
     relatedProductController,
     productCategoryController
-} from "../../controllers/productController.js";
-import productModel from "../../models/productModel.js";
-import categoryModel from "../../models/categoryModel.js";
+} from "../../../controllers/productController.js";
+import productModel from "../../../models/productModel.js";
+import categoryModel from "../../../models/categoryModel.js";
 
 describe("Integration Tests for Viewing Product Details (Single + Category)", () => {
   let mongoServer;

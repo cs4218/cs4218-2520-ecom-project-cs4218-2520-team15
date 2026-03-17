@@ -9,9 +9,9 @@ import {
   productFiltersController,
   productCountController,
   productListController
-} from "../../controllers/productController.js";
-import productModel from "../../models/productModel.js";
-import categoryModel from "../../models/categoryModel.js";
+} from "../../../controllers/productController.js";
+import productModel from "../../../models/productModel.js";
+import categoryModel from "../../../models/categoryModel.js";
 
 describe("Integration Tests for Product Controllers (related to Home Page)", () => {
   let mongoServer;
