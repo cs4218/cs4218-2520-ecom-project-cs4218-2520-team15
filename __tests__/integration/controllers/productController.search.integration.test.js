@@ -153,17 +153,19 @@ describe("Integration Tests for Searching Products", () => {
   });
 
   it("should handle errors when MongoDB has errors", async () => {
-    await mongoose.disconnect();
+    try {
+      await mongoose.disconnect();
 
-    req.params.keyword = "phone";
-    await searchProductController(req, res);
+      req.params.keyword = "phone";
+      await searchProductController(req, res);
 
-    expect(res.status).toHaveBeenCalledWith(500);
-    const sentData = res.send.mock.calls[0][0];
-    expect(sentData.success).toBe(false);
-    expect(sentData.message).toBe("Error in searching for products");
-
-    // Reconnect for other tests
-    await mongoose.connect(mongoServer.getUri());
+      expect(res.status).toHaveBeenCalledWith(500);
+      const sentData = res.send.mock.calls[0][0];
+      expect(sentData.success).toBe(false);
+      expect(sentData.message).toBe("Error in searching for products");
+    } finally {
+      // Reconnect for other tests
+      await mongoose.connect(mongoServer.getUri());
+    }
   });
 });

@@ -137,6 +137,7 @@ describe("Integration Tests for Viewing Product Details (Single + Category)", ()
     });
 
     it("should handle errors when MongoDB has errors", async () => {
+      try {
         await mongoose.disconnect();
 
         req.params.slug = "iphone-15";
@@ -146,9 +147,10 @@ describe("Integration Tests for Viewing Product Details (Single + Category)", ()
         const sentData = res.send.mock.calls[0][0];
         expect(sentData.success).toBe(false);
         expect(sentData.message).toBe("Error while getting single product");
-        
+      } finally {
         // Reconnect for other tests
         await mongoose.connect(mongoServer.getUri());
+      }
     });
   });
 
@@ -193,18 +195,20 @@ describe("Integration Tests for Viewing Product Details (Single + Category)", ()
     });
 
     it("should handle errors when MongoDB has errors", async () => {
-      await mongoose.disconnect();
+      try {
+        await mongoose.disconnect();
 
-      req.params.pid = mock_product0._id;
-      await productPhotoController(req, res);
+        req.params.pid = mock_product0._id;
+        await productPhotoController(req, res);
 
-      expect(res.status).toHaveBeenCalledWith(500);
-      const sentData = res.send.mock.calls[0][0];
-      expect(sentData.success).toBe(false);
-      expect(sentData.message).toBe("Error while getting photo");
-      
-      // Reconnect for other tests
-      await mongoose.connect(mongoServer.getUri());
+        expect(res.status).toHaveBeenCalledWith(500);
+        const sentData = res.send.mock.calls[0][0];
+        expect(sentData.success).toBe(false);
+        expect(sentData.message).toBe("Error while getting photo");
+      } finally {
+        // Reconnect for other tests
+        await mongoose.connect(mongoServer.getUri());
+      }
     });
   });
 
@@ -254,21 +258,23 @@ describe("Integration Tests for Viewing Product Details (Single + Category)", ()
     });
 
     it("should handle errors when MongoDB has errors", async () => {
-      await mongoose.disconnect();
+      try {
+        await mongoose.disconnect();
 
-      req.params = {
-        pid: mock_product2._id,
-        cid: mock_product2.category._id
-      };
-      await relatedProductController(req, res);
+        req.params = {
+          pid: mock_product2._id,
+          cid: mock_product2.category._id
+        };
+        await relatedProductController(req, res);
 
-      expect(res.status).toHaveBeenCalledWith(500);
-      const sentData = res.send.mock.calls[0][0];
-      expect(sentData.success).toBe(false);
-      expect(sentData.message).toBe("Error while getting related products");
-      
-      // Reconnect for other tests
-      await mongoose.connect(mongoServer.getUri());
+        expect(res.status).toHaveBeenCalledWith(500);
+        const sentData = res.send.mock.calls[0][0];
+        expect(sentData.success).toBe(false);
+        expect(sentData.message).toBe("Error while getting related products");
+      } finally {
+        // Reconnect for other tests
+        await mongoose.connect(mongoServer.getUri());
+      }
     });
   });
 
@@ -411,18 +417,20 @@ describe("Integration Tests for Viewing Product Details (Single + Category)", ()
     });
 
     it("should handle errors when MongoDB has errors", async () => {
-      await mongoose.disconnect();
+      try {
+        await mongoose.disconnect();
 
-      req.params = { slug: "phones", page: "1" };
-      await productCategoryController(req, res);
+        req.params = { slug: "phones", page: "1" };
+        await productCategoryController(req, res);
 
-      expect(res.status).toHaveBeenCalledWith(400);
-      const sentData = res.send.mock.calls[0][0];
-      expect(sentData.success).toBe(false);
-      expect(sentData.message).toBe("Error while getting products by category");
-      
-      // Reconnect for other tests
-      await mongoose.connect(mongoServer.getUri());
+        expect(res.status).toHaveBeenCalledWith(400);
+        const sentData = res.send.mock.calls[0][0];
+        expect(sentData.success).toBe(false);
+        expect(sentData.message).toBe("Error while getting products by category");
+      } finally {
+        // Reconnect for other tests
+        await mongoose.connect(mongoServer.getUri());
+      }
     });
   });
 });

@@ -142,16 +142,18 @@ describe("Integration Tests for Product Controllers (related to Home Page)", () 
     });
 
     it("should handle errors when MongoDB has errors", async () => {
-      await mongoose.disconnect();
-      await getProductController(req, res);
+      try {
+        await mongoose.disconnect();
+        await getProductController(req, res);
 
-      expect(res.status).toHaveBeenCalledWith(500);
-      const sentData = res.send.mock.calls[0][0];
-      expect(sentData.success).toBe(false);
-      expect(sentData.message).toBe("Error while getting all products");
-
-      // Reconnect for other tests
-      await mongoose.connect(mongoServer.getUri());
+        expect(res.status).toHaveBeenCalledWith(500);
+        const sentData = res.send.mock.calls[0][0];
+        expect(sentData.success).toBe(false);
+        expect(sentData.message).toBe("Error while getting all products");
+      } finally {
+        // Reconnect for other tests
+        await mongoose.connect(mongoServer.getUri());
+      }
     });
   });
 
@@ -450,18 +452,20 @@ describe("Integration Tests for Product Controllers (related to Home Page)", () 
 
     // ----- Error Handling -----
     it("should handle errors when MongoDB has errors", async () => {
-      await mongoose.disconnect();
+      try {
+        await mongoose.disconnect();
 
-      req.body = { checked: [phones_category._id], radio: [], page: 1 };
-      await productFiltersController(req, res);
+        req.body = { checked: [phones_category._id], radio: [], page: 1 };
+        await productFiltersController(req, res);
 
-      expect(res.status).toHaveBeenCalledWith(500);
-      const sentData = res.send.mock.calls[0][0];
-      expect(sentData.success).toBe(false);
-      expect(sentData.message).toBe("Error while filtering products");
-
-      // Reconnect for other tests
-      await mongoose.connect(mongoServer.getUri());
+        expect(res.status).toHaveBeenCalledWith(500);
+        const sentData = res.send.mock.calls[0][0];
+        expect(sentData.success).toBe(false);
+        expect(sentData.message).toBe("Error while filtering products");
+      } finally {
+        // Reconnect for other tests
+        await mongoose.connect(mongoServer.getUri());
+      }
     });
   });
 
@@ -492,17 +496,19 @@ describe("Integration Tests for Product Controllers (related to Home Page)", () 
     });
 
     it("should handle errors when MongoDB has errors", async () => {
-      await mongoose.disconnect();
-      
-      await productCountController(req, res);
+      try {
+        await mongoose.disconnect();
+        
+        await productCountController(req, res);
 
-      expect(res.status).toHaveBeenCalledWith(500);
-      const sentData = res.send.mock.calls[0][0];
-      expect(sentData.success).toBe(false);
-      expect(sentData.message).toBe("Error in counting products");
-
-      // Reconnect for other tests
-      await mongoose.connect(mongoServer.getUri());
+        expect(res.status).toHaveBeenCalledWith(500);
+        const sentData = res.send.mock.calls[0][0];
+        expect(sentData.success).toBe(false);
+        expect(sentData.message).toBe("Error in counting products");
+      } finally {
+        // Reconnect for other tests
+        await mongoose.connect(mongoServer.getUri());
+      }
     });
   });
 
@@ -677,18 +683,20 @@ describe("Integration Tests for Product Controllers (related to Home Page)", () 
     });
 
     it("should handle errors when MongoDB has errors", async () => {
-      await mongoose.disconnect();
+      try {
+        await mongoose.disconnect();
 
-      req.params.page = 1;
-      await productListController(req, res);
+        req.params.page = 1;
+        await productListController(req, res);
 
-      expect(res.status).toHaveBeenCalledWith(500);
-      const sentData = res.send.mock.calls[0][0];
-      expect(sentData.success).toBe(false);
-      expect(sentData.message).toBe("Error in listing products per page");
-
-      // Reconnect for other tests
-      await mongoose.connect(mongoServer.getUri());
+        expect(res.status).toHaveBeenCalledWith(500);
+        const sentData = res.send.mock.calls[0][0];
+        expect(sentData.success).toBe(false);
+        expect(sentData.message).toBe("Error in listing products per page");
+      } finally {
+        // Reconnect for other tests
+        await mongoose.connect(mongoServer.getUri());
+      }
     });
   });
 });
