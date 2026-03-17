@@ -12,7 +12,6 @@ import categoryModel from "../../models/categoryModel.js";
 
 describe("Integration Tests for Viewing Product Details & Category Product (API calls)", () => {
   let mongoServer;
-  let req, res;
   let phones_category, books_category;
   let mock_product0, mock_product1, mock_product2;
 
