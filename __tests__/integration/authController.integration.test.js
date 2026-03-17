@@ -128,15 +128,14 @@ describe("Integration tests for registration components", () => {
 
             // Verify if db saves user
             const savedUser = await userModel.findOne({ email: 'newuser@gmail.com' });
-            expect(savedUser).toMatchObject({
-                name: 'New User',
-                email: 'newuser@gmail.com',
-                phone: '1234567890',
-                address: 'newaddr',
-                answer: 'newanswer',
-                role: 0,
-            });
-            expect(savedUser.password).not.toBe('newpassword'); // Password is hashed
+            expect(savedUser).toBeTruthy();
+            expect(savedUser.name).toBe('New User');
+            expect(savedUser.email).toBe('newuser@gmail.com');
+            expect(savedUser.phone).toBe('1234567890');
+            expect(savedUser.address).toBe('newaddr');
+            expect(savedUser.answer).toBe('newanswer');
+            expect(savedUser.role).toBe(0);
+            expect(savedUser.password).not.toBe('newpassword'); // Should be hashed
         });
     });
 });
