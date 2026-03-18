@@ -2,22 +2,23 @@
  * Student No: A0273286W
  */
 
+import JWT from "jsonwebtoken";
 import { MongoMemoryServer } from "mongodb-memory-server";
 import mongoose from "mongoose";
+import request from "supertest";
 import {
   createProductController,
   deleteProductController,
   updateProductController,
 } from "../../controllers/productController";
+import { hashPassword } from "../../helpers/authHelper";
 import categoryModel from "../../models/categoryModel";
 import orderModel from "../../models/orderModel";
 import productModel from "../../models/productModel";
+import userModel from "../../models/userModel";
+import app from "../../server";
 
-describe("createProductController function integration with MongoDB + Slugify + fs", () => {
-  const mockRes = {
-    status: jest.fn().mockReturnThis(),
-    send: jest.fn().mockReturnThis(),
-  };
+describe("createProductController function", () => {
   let mongoServer, category;
 
   beforeAll(async () => {
@@ -42,110 +43,328 @@ describe("createProductController function integration with MongoDB + Slugify + 
   afterEach(async () => {
     await productModel.deleteMany({});
     await categoryModel.deleteMany({});
-    jest.clearAllMocks();
   });
 
-  it("should create product correctly", async () => {
-    const mockReq = {
-      fields: {
+  describe("integration with MongoDB + Slugify + fs", () => {
+    const mockRes = {
+      status: jest.fn().mockReturnThis(),
+      send: jest.fn().mockReturnThis(),
+    };
+
+    afterEach(async () => {
+      jest.clearAllMocks();
+    });
+
+    it("should create product correctly", async () => {
+      const mockReq = {
+        fields: {
+          name: "Laptop",
+          description: "A mock laptop",
+          price: "9.99",
+          category: category._id,
+          quantity: "10",
+          shipping: "1",
+        },
+        files: {
+          photo: {
+            path: "./__mocks__/mock-img.png",
+            type: "image/png",
+            size: 100,
+          },
+        },
+      };
+
+      await createProductController(mockReq, mockRes);
+
+      expect(mockRes.status).toHaveBeenCalledWith(201);
+      expect(mockRes.send).toHaveBeenCalledWith({
+        success: true,
+        message: "Product created successfully",
+        products: expect.objectContaining({
+          name: "Laptop",
+          slug: "Laptop",
+          description: "A mock laptop",
+          price: 9.99,
+          category: category._id,
+          quantity: 10,
+          shipping: true,
+        }),
+      });
+    });
+
+    it("should create product correctly if shipping is undefined", async () => {
+      const mockReq = {
+        fields: {
+          name: "Laptop",
+          description: "A mock laptop",
+          price: "9.99",
+          category: category._id,
+          quantity: "10",
+        },
+        files: {
+          photo: {
+            path: "./__mocks__/mock-img.png",
+            type: "image/png",
+            size: 100,
+          },
+        },
+      };
+
+      await createProductController(mockReq, mockRes);
+
+      expect(mockRes.status).toHaveBeenCalledWith(201);
+      expect(mockRes.send).toHaveBeenCalledWith({
+        success: true,
+        message: "Product created successfully",
+        products: expect.objectContaining({
+          name: "Laptop",
+          slug: "Laptop",
+          description: "A mock laptop",
+          price: 9.99,
+          category: category._id,
+          quantity: 10,
+          shipping: false,
+        }),
+      });
+    });
+
+    it("should return error if MongoDB has issues", async () => {
+      const mockReq = {
+        fields: {
+          name: "Laptop",
+          description: "A mock laptop",
+          price: "9.99",
+          category: category._id,
+          quantity: "ten", // not a number
+        },
+        files: {
+          photo: {
+            path: "./__mocks__/mock-img.png",
+            type: "image/png",
+            size: 100,
+          },
+        },
+      };
+
+      await createProductController(mockReq, mockRes);
+
+      expect(mockRes.status).toHaveBeenCalledWith(500);
+      expect(mockRes.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          success: false,
+          message: "Error in creating product",
+        }),
+      );
+    });
+
+    it("should return error if server issues", async () => {
+      const mockReq = {
+        fields: {
+          name: "Laptop",
+          description: "A mock laptop",
+          price: "9.99",
+          category: "1",
+          quantity: "10",
+          shipping: "0",
+        },
+        files: {
+          photo: {
+            path: "/path/mock-file.png", // invalid file path
+            type: "image/png",
+            size: 100,
+          },
+        },
+      };
+
+      await createProductController(mockReq, mockRes);
+
+      expect(mockRes.status).toHaveBeenCalledWith(500);
+      expect(mockRes.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          success: false,
+          message: "Error in creating product",
+        }),
+      );
+    });
+  });
+
+  describe("integration with HTTP", () => {
+    let user, admin, authToken;
+
+    const act = async (data, token = authToken) => {
+      const req = request(app)
+        .post("/api/v1/product/create-product")
+        .set("Authorization", token)
+        .field("name", data.name)
+        .field("description", data.description)
+        .field("price", data.price)
+        .field(
+          "category",
+          data.category instanceof mongoose.Types.ObjectId
+            ? data.category.toString()
+            : data.category,
+        )
+        .field("quantity", data.quantity)
+        .attach("photo", data.photo);
+      if (data.shipping) {
+        req.field("shipping", data.shipping);
+      }
+      return await req;
+    };
+
+    beforeAll(async () => {
+      user = await new userModel({
+        name: "user",
+        email: "user@example.com",
+        password: await hashPassword("password"),
+        phone: "81234567",
+        address: "123 Jane Street",
+        answer: "chicken",
+        role: 0,
+      }).save();
+      admin = await new userModel({
+        name: "admin",
+        email: "admin@example.com",
+        password: await hashPassword("password"),
+        phone: "91234567",
+        address: "456 Jane Street",
+        answer: "pork",
+        role: 1,
+      }).save();
+      authToken = JWT.sign({ _id: admin._id }, process.env.JWT_SECRET, {
+        expiresIn: "1d",
+      });
+    });
+
+    afterAll(async () => {
+      await userModel.deleteMany({});
+    });
+
+    it("should create product correctly", async () => {
+      const data = {
         name: "Laptop",
         description: "A mock laptop",
         price: "9.99",
         category: category._id,
         quantity: "10",
         shipping: "1",
-      },
-      files: {
-        photo: {
-          path: "./__mocks__/mock-img.png",
-          type: "image/png",
-          size: 100,
-        },
-      },
-    };
+        photo: "./__mocks__/mock-img.png",
+      };
 
-    await createProductController(mockReq, mockRes);
+      const response = await act(data);
 
-    expect(mockRes.status).toHaveBeenCalledWith(201);
-    expect(mockRes.send).toHaveBeenCalledWith({
-      success: true,
-      message: "Product created successfully",
-      products: expect.objectContaining({
-        name: "Laptop",
-        slug: "Laptop",
-        description: "A mock laptop",
-        price: 9.99,
-        category: category._id,
-        quantity: 10,
-        shipping: true,
-      }),
+      expect(response.status).toEqual(201);
+      expect(response.body.success).toEqual(true);
     });
-  });
 
-  it("should create product correctly if shipping is undefined", async () => {
-    const mockReq = {
-      fields: {
+    it("should create product correctly if shipping is undefined", async () => {
+      const data = {
         name: "Laptop",
         description: "A mock laptop",
         price: "9.99",
         category: category._id,
         quantity: "10",
-      },
-      files: {
-        photo: {
-          path: "./__mocks__/mock-img.png",
-          type: "image/png",
-          size: 100,
-        },
-      },
-    };
+        photo: "./__mocks__/mock-img.png",
+      };
 
-    await createProductController(mockReq, mockRes);
+      const response = await act(data);
 
-    expect(mockRes.status).toHaveBeenCalledWith(201);
-    expect(mockRes.send).toHaveBeenCalledWith({
-      success: true,
-      message: "Product created successfully",
-      products: expect.objectContaining({
-        name: "Laptop",
-        slug: "Laptop",
-        description: "A mock laptop",
-        price: 9.99,
-        category: category._id,
-        quantity: 10,
-        shipping: false,
-      }),
+      expect(response.status).toEqual(201);
+      expect(response.body.success).toEqual(true);
     });
-  });
 
-  it("should return error if server issues", async () => {
-    const mockReq = {
-      fields: {
+    it("should return error if MongoDB has issues", async () => {
+      const data = {
         name: "Laptop",
         description: "A mock laptop",
         price: "9.99",
-        category: "1",
+        category: category._id,
+        quantity: "ten", // not a number
+        shipping: "1",
+        photo: "./__mocks__/mock-img.png",
+      };
+
+      const response = await act(data);
+
+      expect(response.status).toEqual(500);
+      expect(response.body.success).toEqual(false);
+    });
+
+    it("should return error if server issues", async () => {
+      const data = {
+        name: "Laptop",
+        description: "A mock laptop",
+        price: "9.99",
+        category: category._id,
         quantity: "10",
-        shipping: "0",
-      },
-      files: {
-        photo: {
-          path: "/path/mock-file.png", // invalid file path
-          type: "image/png",
-          size: 100,
+        shipping: "yes", // malformed
+        photo: "./__mocks__/mock-img.png",
+      };
+
+      const response = await act(data);
+
+      expect(response.status).toEqual(500);
+      expect(response.body.success).toEqual(false);
+    });
+
+    it("should return error if user is not admin", async () => {
+      const data = {
+        name: "Laptop",
+        description: "A mock laptop",
+        price: "9.99",
+        category: category._id,
+        quantity: "10",
+        shipping: "1",
+      };
+      const token = JWT.sign({ _id: user._id }, process.env.JWT_SECRET, {
+        expiresIn: "5m",
+      });
+
+      const response = await act(data, token);
+
+      expect(response.status).toEqual(401);
+      expect(response.body.success).toEqual(false);
+    });
+
+    it("should return error if authorization token is invalid", async () => {
+      const data = {
+        name: "Laptop",
+        description: "A mock laptop",
+        price: "9.99",
+        category: category._id,
+        quantity: "10",
+        shipping: "1",
+      };
+
+      const response = await act(data, "invalid-token");
+
+      expect(response.status).toEqual(401);
+      expect(response.body.success).toEqual(false);
+    });
+
+    it("should return error if authorization token is expired", async () => {
+      const data = {
+        name: "Laptop",
+        description: "A mock laptop",
+        price: "9.99",
+        category: category._id,
+        quantity: "10",
+        shipping: "1",
+      };
+      const expiredToken = JWT.sign(
+        { _id: admin._id },
+        process.env.JWT_SECRET,
+        {
+          expiresIn: "1ms",
         },
-      },
-    };
+      );
+      await new Promise((resolve) => setTimeout(resolve, 1));
 
-    await createProductController(mockReq, mockRes);
+      const response = await act(data, expiredToken);
 
-    expect(mockRes.status).toHaveBeenCalledWith(500);
-    expect(mockRes.send).toHaveBeenCalledWith(
-      expect.objectContaining({
-        success: false,
-        message: "Error in creating product",
-      }),
-    );
+      expect(response.status).toEqual(401);
+      expect(response.body.success).toEqual(false);
+    });
   });
 });
 
