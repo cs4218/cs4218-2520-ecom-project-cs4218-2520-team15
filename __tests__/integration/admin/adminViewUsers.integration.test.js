@@ -7,10 +7,10 @@ import request from 'supertest';
 import mongoose from 'mongoose';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import JWT from 'jsonwebtoken';
-import app from '../../server';
-import userModel from '../../models/userModel';
-import { hashPassword } from '../../helpers/authHelper';
-import { getAllUsersController } from '../../controllers/authController';
+import app from '../../../server';
+import userModel from '../../../models/userModel';
+import { hashPassword } from '../../../helpers/authHelper';
+import { getAllUsersController } from '../../../controllers/authController';
 
 let mongoServer;
 
