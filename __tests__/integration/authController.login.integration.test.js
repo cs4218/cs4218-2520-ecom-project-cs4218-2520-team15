@@ -73,24 +73,26 @@ describe("Integration tests for login components", () => {
         });
 
         it("should return 500 if database has errors", async () => {
-            await mongoose.disconnect();
-            req.body = {
-                email: 'existuser@gmail.com',
-                password: 'existpassword',
-            };
-
-            await loginController(req, res);
-
-            expect(res.status).toHaveBeenCalledWith(500);
-            expect(res.send).toHaveBeenCalledWith(
-                expect.objectContaining({
-                    success: false,
-                    message: 'Error in login',
-                })
-            );
-
-            // Reset db connection
-            await mongoose.connect(mongoServer.getUri());
+            try {
+                req.body = {
+                    email: 'existuser@gmail.com',
+                    password: 'existpassword',
+                };
+                
+                await mongoose.disconnect();
+                await loginController(req, res);
+    
+                expect(res.status).toHaveBeenCalledWith(500);
+                expect(res.send).toHaveBeenCalledWith(
+                    expect.objectContaining({
+                        success: false,
+                        message: 'Error in login',
+                    })
+                );
+            } finally {
+                // Reset db connection
+                await mongoose.connect(mongoServer.getUri());
+            }
         });
     });
 
