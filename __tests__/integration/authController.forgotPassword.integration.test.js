@@ -73,25 +73,27 @@ describe("Integration tests for forgot password components", () => {
         });
 
         it("should return 500 if database has errors", async () => {
-            await mongoose.disconnect();
-            req.body = {
-                email: 'existuser@gmail.com',
-                password: 'newpassword',
-                answer: 'existanswer',
-            };
-
-            await forgotPasswordController(req, res);
-
-            expect(res.status).toHaveBeenCalledWith(500);
-            expect(res.send).toHaveBeenCalledWith(
-                expect.objectContaining({
-                    success: false,
-                    message: 'Error in resetting password',
-                })
-            );
-
-            // Reset db connection
-            await mongoose.connect(mongoServer.getUri());
+            try {
+                req.body = {
+                    email: 'existuser@gmail.com',
+                    password: 'newpassword',
+                    answer: 'existanswer',
+                };
+                
+                await mongoose.disconnect();
+                await forgotPasswordController(req, res);
+    
+                expect(res.status).toHaveBeenCalledWith(500);
+                expect(res.send).toHaveBeenCalledWith(
+                    expect.objectContaining({
+                        success: false,
+                        message: 'Error in resetting password',
+                    })
+                );
+            } finally {
+                // Reset db connection
+                await mongoose.connect(mongoServer.getUri());
+            }
         })
     });
 
