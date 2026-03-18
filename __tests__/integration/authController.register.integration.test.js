@@ -74,28 +74,30 @@ describe("Integration tests for registration components", () => {
         });
 
         it("should return 500 if database has errors", async () => {
-            await mongoose.disconnect();
-            req.body = {
-                name: 'New User',
-                email: 'newuser@gmail.com',
-                phone: '1234567890',
-                address: 'newaddr',
-                password: 'newpassword',
-                answer: 'newanswer',
-            };
+            try {
+                req.body = {
+                    name: 'New User',
+                    email: 'newuser@gmail.com',
+                    phone: '1234567890',
+                    address: 'newaddr',
+                    password: 'newpassword',
+                    answer: 'newanswer',
+                };
+                
+                await mongoose.disconnect();
+                await registerController(req, res);
 
-            await registerController(req, res);
-
-            expect(res.status).toHaveBeenCalledWith(500);
-            expect(res.send).toHaveBeenCalledWith(
-                expect.objectContaining({
-                    success: false,
-                    message: 'Error in Registration',
-                })
-            );
-
-            // Reset db connection
-            await mongoose.connect(mongoServer.getUri());
+                expect(res.status).toHaveBeenCalledWith(500);
+                expect(res.send).toHaveBeenCalledWith(
+                    expect.objectContaining({
+                        success: false,
+                        message: 'Error in Registration',
+                    })
+                );
+            } finally {
+                // Reset db connection
+                await mongoose.connect(mongoServer.getUri());
+            }
         });
     });
 
