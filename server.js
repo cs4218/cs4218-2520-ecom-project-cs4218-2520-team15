@@ -30,11 +30,9 @@ app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/category", categoryRoutes);
 app.use("/api/v1/product", productRoutes);
 
-// Only expose test endpoints in test environment
-if (process.env.NODE_ENV === "test") {
-  const { default: testRoutes } = await import("./routes/testRoutes.js");
-  app.use("/api/test", testRoutes);
-  console.log("Test endpoints enabled — do NOT use in production");
+if (process.env.NODE_ENV == 'test') {
+    app.use("/api/v1/test", testRoutes);
+    console.log("Test endpoints enabled — do NOT use in production");
 }
 
 // rest api
