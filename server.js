@@ -12,7 +12,10 @@ import cors from "cors";
 dotenv.config();
 
 //database config
-connectDB();
+// only connect when not running tests; tests use an in-memory MongoDB and manage connection
+if (process.env.NODE_ENV !== 'test') {
+    connectDB();
+}
 
 const app = express();
 
@@ -34,6 +37,11 @@ app.get('/', (req,res) => {
 
 const PORT = process.env.PORT || 6060;
 
-app.listen(PORT, () => {
-    console.log(`Server running on ${process.env.DEV_MODE} mode on ${PORT}`.bgCyan.white);
-});
+// don't auto-listen when running tests (supertest will import the app)
+if (process.env.NODE_ENV !== 'test') {
+    app.listen(PORT, () => {
+        console.log(`Server running on ${process.env.DEV_MODE} mode on ${PORT}`.bgCyan.white);
+    });
+}
+
+export default app;
