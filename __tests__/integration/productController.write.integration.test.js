@@ -832,11 +832,7 @@ describe("updateProductController function", () => {
   });
 });
 
-describe("deleteProductController function integration with MongoDB", () => {
-  const mockRes = {
-    status: jest.fn().mockReturnThis(),
-    send: jest.fn().mockReturnThis(),
-  };
+describe("deleteProductController function", () => {
   let mongoServer, product;
 
   beforeAll(async () => {
@@ -875,49 +871,180 @@ describe("deleteProductController function integration with MongoDB", () => {
     await productModel.deleteMany({});
     await categoryModel.deleteMany({});
     await orderModel.deleteMany({});
-    jest.clearAllMocks();
   });
 
-  it("should delete product correctly", async () => {
-    const mockReq = { params: { pid: product._id } };
+  describe("integration with MongoDB", () => {
+    const mockRes = {
+      status: jest.fn().mockReturnThis(),
+      send: jest.fn().mockReturnThis(),
+    };
 
-    await deleteProductController(mockReq, mockRes);
-
-    expect(mockRes.status).toHaveBeenCalledWith(200);
-    expect(mockRes.send).toHaveBeenCalledWith({
-      success: true,
-      message: "Product deleted successfully",
+    afterEach(async () => {
+      jest.clearAllMocks();
     });
-  });
 
-  it("should return error if product has orders", async () => {
-    const mockReq = { params: { pid: product._id } };
-    await new orderModel({
-      products: [product._id],
-      payment: {},
-      buyer: new mongoose.Types.ObjectId(),
-    }).save();
+    it("should delete product correctly", async () => {
+      const mockReq = { params: { pid: product._id } };
 
-    await deleteProductController(mockReq, mockRes);
+      await deleteProductController(mockReq, mockRes);
 
-    expect(mockRes.status).toHaveBeenCalledWith(400);
-    expect(mockRes.send).toHaveBeenCalledWith({
-      success: false,
-      message: "Unable to delete product with orders",
+      expect(mockRes.status).toHaveBeenCalledWith(200);
+      expect(mockRes.send).toHaveBeenCalledWith({
+        success: true,
+        message: "Product deleted successfully",
+      });
     });
-  });
 
-  it("should return error if server issues", async () => {
-    const mockReq = { params: { pid: "invalid-id" } };
+    it("should return ok if product does not exist", async () => {
+      const mockReq = { params: { pid: new mongoose.Types.ObjectId() } };
 
-    await deleteProductController(mockReq, mockRes);
+      await deleteProductController(mockReq, mockRes);
 
-    expect(mockRes.status).toHaveBeenCalledWith(500);
-    expect(mockRes.send).toHaveBeenCalledWith(
-      expect.objectContaining({
+      expect(mockRes.status).toHaveBeenCalledWith(200);
+      expect(mockRes.send).toHaveBeenCalledWith({
+        success: true,
+        message: "Product deleted successfully",
+      });
+    });
+
+    it("should return error if product has orders", async () => {
+      const mockReq = { params: { pid: product._id } };
+      await new orderModel({
+        products: [product._id],
+        payment: {},
+        buyer: new mongoose.Types.ObjectId(),
+      }).save();
+
+      await deleteProductController(mockReq, mockRes);
+
+      expect(mockRes.status).toHaveBeenCalledWith(400);
+      expect(mockRes.send).toHaveBeenCalledWith({
         success: false,
-        message: "Error in deleting product",
-      }),
-    );
+        message: "Unable to delete product with orders",
+      });
+    });
+
+    it("should return error if MongoDB has issues", async () => {
+      const mockReq = { params: { pid: "invalid-id" } };
+
+      await deleteProductController(mockReq, mockRes);
+
+      expect(mockRes.status).toHaveBeenCalledWith(500);
+      expect(mockRes.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          success: false,
+          message: "Error in deleting product",
+        }),
+      );
+    });
+  });
+
+  describe("integration with HTTP", () => {
+    let user, admin, authToken;
+
+    const act = async ({ id = product._id, token = authToken } = {}) => {
+      return await request(app)
+        .delete(`/api/v1/product/delete-product/${id}`)
+        .set("Authorization", token);
+    };
+
+    beforeAll(async () => {
+      user = await new userModel({
+        name: "user",
+        email: "user@example.com",
+        password: await hashPassword("password"),
+        phone: "81234567",
+        address: "123 Jane Street",
+        answer: "chicken",
+        role: 0,
+      }).save();
+      admin = await new userModel({
+        name: "admin",
+        email: "admin@example.com",
+        password: await hashPassword("password"),
+        phone: "91234567",
+        address: "456 Jane Street",
+        answer: "pork",
+        role: 1,
+      }).save();
+      authToken = JWT.sign({ _id: admin._id }, process.env.JWT_SECRET, {
+        expiresIn: "1d",
+      });
+    });
+
+    afterAll(async () => {
+      await userModel.deleteMany({});
+    });
+    afterEach(async () => {
+      jest.clearAllMocks();
+    });
+
+    it("should delete product correctly", async () => {
+      const response = await act();
+
+      expect(response.status).toEqual(200);
+      expect(response.body.success).toEqual(true);
+    });
+
+    it("should return ok if product does not exist", async () => {
+      const response = await act({ id: new mongoose.Types.ObjectId() });
+
+      expect(response.status).toEqual(200);
+      expect(response.body.success).toEqual(true);
+    });
+
+    it("should return error if product has orders", async () => {
+      await new orderModel({
+        products: [product._id],
+        payment: {},
+        buyer: new mongoose.Types.ObjectId(),
+      }).save();
+
+      const response = await act();
+
+      expect(response.status).toEqual(400);
+      expect(response.body.success).toEqual(false);
+    });
+
+    it("should return error if MongoDB has issues", async () => {
+      const response = await act({ id: "invalid-id" });
+
+      expect(response.status).toEqual(500);
+      expect(response.body.success).toEqual(false);
+    });
+
+    it("should return error if user is not admin", async () => {
+      const token = JWT.sign({ _id: user._id }, process.env.JWT_SECRET, {
+        expiresIn: "5m",
+      });
+
+      const response = await act({ token });
+
+      expect(response.status).toEqual(401);
+      expect(response.body.success).toEqual(false);
+    });
+
+    it("should return error if authorization token is invalid", async () => {
+      const response = await act({ token: "invalid-token" });
+
+      expect(response.status).toEqual(401);
+      expect(response.body.success).toEqual(false);
+    });
+
+    it("should return error if authorization token is expired", async () => {
+      const expiredToken = JWT.sign(
+        { _id: admin._id },
+        process.env.JWT_SECRET,
+        {
+          expiresIn: "1ms",
+        },
+      );
+      await new Promise((resolve) => setTimeout(resolve, 1));
+
+      const response = await act({ token: expiredToken });
+
+      expect(response.status).toEqual(401);
+      expect(response.body.success).toEqual(false);
+    });
   });
 });
