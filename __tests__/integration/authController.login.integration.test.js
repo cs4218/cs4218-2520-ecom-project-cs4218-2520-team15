@@ -57,7 +57,7 @@ describe("Integration tests for login components", () => {
     });
 
     describe("Integration between loginController and userModel", () => {
-        it("should return error is user is not registered", async () => {
+        it("should return error if user is not registered", async () => {
             req.body = {
                 email: 'newuser@gmail.com',
                 password: 'newpassword',
