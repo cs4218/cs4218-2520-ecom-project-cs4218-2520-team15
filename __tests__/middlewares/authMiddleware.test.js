@@ -51,7 +51,7 @@ describe("authMiddleware Tests", () => {
             expect(next).toHaveBeenCalled();
         });
 
-        it("should return 500 if internal error is thrown", async () => {
+        it("should return 401 if internal error is thrown", async () => {
             const mockError = new Error("mock-error");
             JWT.verify.mockImplementation(() => { throw mockError });
 
@@ -59,8 +59,8 @@ describe("authMiddleware Tests", () => {
 
             expect(console.log).toHaveBeenCalledWith(mockError);
             expect(next).not.toHaveBeenCalled();
-            expect(res.status).toHaveBeenCalledWith(500);
-            expect(res.send).toHaveBeenCalledWith({ success: false, error: mockError, message: "Error in sign in middleware" });
+            expect(res.status).toHaveBeenCalledWith(401);
+            expect(res.send).toHaveBeenCalledWith({ success: false, error: mockError, message: "Invalid or expired token" });
             JWT.verify.mockReset();
         });
     });
