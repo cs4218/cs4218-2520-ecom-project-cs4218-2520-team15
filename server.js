@@ -30,10 +30,7 @@ app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/category", categoryRoutes);
 app.use("/api/v1/product", productRoutes);
 
-if (process.env.NODE_ENV == 'test') {
-    app.use("/api/v1/test", testRoutes);
-    console.log("Test endpoints enabled — do NOT use in production");
-}
+app.use("/api/v1/test", testRoutes);
 
 // rest api
 

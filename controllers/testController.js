@@ -18,18 +18,23 @@ export const seedDatabase = async (req, res) => {
     ]);
 
     // Create users (hash password exactly as your auth flow does)
-    const hashedPassword_admin = hashPassword(TEST_USERS[0].password);
-    const hashedPassword_normal = hashPassword(TEST_USERS[1].password);
+    const hashedPassword_admin = await hashPassword(TEST_USERS[0].password);
+    const hashedPassword_normal = await hashPassword(TEST_USERS[1].password);
     
-    await new userModel({
+    const createdAdmin = await new userModel({
       ...TEST_USERS[0],
       password: hashedPassword_admin
     }).save();
-
-    await new userModel({
+    
+    const createdNormal = await new userModel({
       ...TEST_USERS[1],
       password: hashedPassword_normal
     }).save();
+    
+    console.log('✅ Users created:', {
+      admin: createdAdmin.email,
+      normal: createdNormal.email,
+    });
 
     // Create categories, keep a slug --> _id map
     const categoryMap = {};
@@ -37,6 +42,8 @@ export const seedDatabase = async (req, res) => {
       const saved = await new categoryModel(cat).save();
       categoryMap[cat.slug] = saved._id;
     }
+    
+    console.log('✅ Categories created:', Object.keys(categoryMap).length);
 
     // Create products, resolving categorySlug --> _id
     for (const product of TEST_PRODUCTS) {
@@ -50,13 +57,28 @@ export const seedDatabase = async (req, res) => {
         },
       }).save();
     }
+    
+    console.log('✅ Products created:', TEST_PRODUCTS.length);
 
     // Create orders (not added here since empty)
 
-    res.status(200).json({ success: true, message: "Database seeded" });
+    res.status(200).json({ 
+      success: true, 
+      message: "Database seeded successfully",
+      data: {
+        users: 2,
+        categories: Object.keys(categoryMap).length,
+        products: TEST_PRODUCTS.length,
+      }
+    });
   } catch (error) {
     console.error("Seed error:", error);
-    res.status(500).json({ success: false, message: "Seed failed", error: error.message });
+    res.status(500).json({ 
+      success: false, 
+      message: "Seed failed", 
+      error: error.message,
+      stack: error.stack
+    });
   }
 };
 
@@ -74,5 +96,25 @@ export const teardownDatabase = async (req, res) => {
   } catch (error) {
     console.error("Teardown error:", error);
     res.status(500).json({ success: false, message: "Teardown failed", error: error.message });
+  }
+};
+
+export const checkSeededUsers = async (req, res) => {
+  try {
+    const users = await userModel.find({}).select('-password');
+    console.log('Users in database:', users.length);
+    res.status(200).json({
+      success: true,
+      count: users.length,
+      users: users.map(u => ({
+        _id: u._id,
+        name: u.name,
+        email: u.email,
+        role: u.role,
+      }))
+    });
+  } catch (error) {
+    console.error("Check users error:", error);
+    res.status(500).json({ success: false, message: "Check failed", error: error.message });
   }
 };
