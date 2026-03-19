@@ -154,6 +154,7 @@ describe("createCategoryController function", () => {
 
       expect(response.status).toEqual(201);
       expect(response.body.success).toEqual(true);
+      expect(response.body.message).toEqual("New category created");
     });
 
     it("should return error if missing fields", async () => {
@@ -163,6 +164,7 @@ describe("createCategoryController function", () => {
 
       expect(response.status).toEqual(400);
       expect(response.body.success).toEqual(false);
+      expect(response.body.message).toEqual("Name is required");
     });
 
     it("should return error if category already exists", async () => {
@@ -172,6 +174,7 @@ describe("createCategoryController function", () => {
 
       expect(response.status).toEqual(200);
       expect(response.body.success).toEqual(false);
+      expect(response.body.message).toEqual("Category already exists");
     });
 
     it("should return error if MongoDB has issues", async () => {
@@ -181,6 +184,7 @@ describe("createCategoryController function", () => {
 
       expect(response.status).toEqual(500);
       expect(response.body.success).toEqual(false);
+      expect(response.body.message).toEqual("Error in creating category");
     });
 
     it("should return error if user is not admin", async () => {
@@ -193,6 +197,7 @@ describe("createCategoryController function", () => {
 
       expect(response.status).toEqual(401);
       expect(response.body.success).toEqual(false);
+      expect(response.body.message).toEqual("Unauthorized Access");
     });
 
     it("should return error if authorization token is invalid", async () => {
@@ -202,6 +207,7 @@ describe("createCategoryController function", () => {
 
       expect(response.status).toEqual(401);
       expect(response.body.success).toEqual(false);
+      expect(response.body.message).toEqual("Invalid or expired token");
     });
 
     it("should return error if authorization token is expired", async () => {
@@ -219,6 +225,7 @@ describe("createCategoryController function", () => {
 
       expect(response.status).toEqual(401);
       expect(response.body.success).toEqual(false);
+      expect(response.body.message).toEqual("Invalid or expired token");
     });
   });
 });
@@ -377,6 +384,7 @@ describe("updateCategoryController function", () => {
 
       expect(response.status).toEqual(200);
       expect(response.body.success).toEqual(true);
+      expect(response.body.message).toEqual("Category updated successfully");
     });
 
     it("should return error if missing fields", async () => {
@@ -386,6 +394,7 @@ describe("updateCategoryController function", () => {
 
       expect(response.status).toEqual(400);
       expect(response.body.success).toEqual(false);
+      expect(response.body.message).toEqual("Name is required");
     });
 
     it("should return error if category not found", async () => {
@@ -395,6 +404,7 @@ describe("updateCategoryController function", () => {
 
       expect(response.status).toEqual(200);
       expect(response.body.success).toEqual(false);
+      expect(response.body.message).toEqual("Category does not exist");
     });
 
     it("should return error if MongoDB has issues", async () => {
@@ -404,6 +414,7 @@ describe("updateCategoryController function", () => {
 
       expect(response.status).toEqual(500);
       expect(response.body.success).toEqual(false);
+      expect(response.body.message).toEqual("Error in updating category");
     });
 
     it("should return error if user is not admin", async () => {
@@ -416,6 +427,7 @@ describe("updateCategoryController function", () => {
 
       expect(response.status).toEqual(401);
       expect(response.body.success).toEqual(false);
+      expect(response.body.message).toEqual("Unauthorized Access");
     });
 
     it("should return error if authorization token is invalid", async () => {
@@ -425,6 +437,7 @@ describe("updateCategoryController function", () => {
 
       expect(response.status).toEqual(401);
       expect(response.body.success).toEqual(false);
+      expect(response.body.message).toEqual("Invalid or expired token");
     });
 
     it("should return error if authorization token is expired", async () => {
@@ -442,6 +455,7 @@ describe("updateCategoryController function", () => {
 
       expect(response.status).toEqual(401);
       expect(response.body.success).toEqual(false);
+      expect(response.body.message).toEqual("Invalid or expired token");
     });
   });
 });
@@ -593,6 +607,7 @@ describe("deleteCategoryController function", () => {
 
       expect(response.status).toEqual(200);
       expect(response.body.success).toEqual(true);
+      expect(response.body.message).toEqual("Category deleted successfully");
     });
 
     it("should return ok if category does not exist", async () => {
@@ -600,6 +615,7 @@ describe("deleteCategoryController function", () => {
 
       expect(response.status).toEqual(200);
       expect(response.body.success).toEqual(true);
+      expect(response.body.message).toEqual("Category deleted successfully");
     });
 
     it("should return error if category has products", async () => {
@@ -620,6 +636,9 @@ describe("deleteCategoryController function", () => {
 
       expect(response.status).toEqual(400);
       expect(response.body.success).toEqual(false);
+      expect(response.body.message).toEqual(
+        "Unable to delete category that contains products",
+      );
     });
 
     it("should return error if MongoDB has issues", async () => {
@@ -627,6 +646,7 @@ describe("deleteCategoryController function", () => {
 
       expect(response.status).toEqual(500);
       expect(response.body.success).toEqual(false);
+      expect(response.body.message).toEqual("Error in deleting category");
     });
 
     it("should return error if user is not admin", async () => {
@@ -638,6 +658,7 @@ describe("deleteCategoryController function", () => {
 
       expect(response.status).toEqual(401);
       expect(response.body.success).toEqual(false);
+      expect(response.body.message).toEqual("Unauthorized Access");
     });
 
     it("should return error if authorization token is invalid", async () => {
@@ -645,6 +666,7 @@ describe("deleteCategoryController function", () => {
 
       expect(response.status).toEqual(401);
       expect(response.body.success).toEqual(false);
+      expect(response.body.message).toEqual("Invalid or expired token");
     });
 
     it("should return error if authorization token is expired", async () => {
@@ -661,6 +683,7 @@ describe("deleteCategoryController function", () => {
 
       expect(response.status).toEqual(401);
       expect(response.body.success).toEqual(false);
+      expect(response.body.message).toEqual("Invalid or expired token");
     });
   });
 });
