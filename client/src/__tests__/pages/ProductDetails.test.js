@@ -431,8 +431,7 @@ describe("Product Details Page", () => {
     // Arrange
     useParams.mockReturnValue({ slug: "nonexistent-product" });
 
-    axios.get.mockResolvedValueOnce({ data: { product: {} } });
-    axios.get.mockResolvedValueOnce({ data: { products: [] } });
+    axios.get.mockResolvedValueOnce({ data: {} });
 
     // Act
     await act(async () => {renderProductDetails()});
@@ -444,10 +443,6 @@ describe("Product Details Page", () => {
       );
     }); 
 
-    expect(screen.getByText("Product Details")).toBeInTheDocument();
-    expect(screen.getByText(/Name :/i)).toBeInTheDocument();
-    expect(screen.getByText(/Description :/i)).toBeInTheDocument();
-    expect(screen.getByText(/Price :/i)).toBeInTheDocument();
-    expect(screen.getByText(/Category :/i)).toBeInTheDocument();
+    expect(screen.getByText("Product not found.")).toBeInTheDocument();
   });
 });
