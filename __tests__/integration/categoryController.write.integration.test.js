@@ -86,7 +86,7 @@ describe("createCategoryController function", () => {
       await createCategoryController(mockReq, mockRes);
 
       expect(await categoryModel.countDocuments()).toEqual(1);
-      expect(mockRes.status).toHaveBeenCalledWith(400);
+      expect(mockRes.status).toHaveBeenCalledWith(200);
       expect(mockRes.send).toHaveBeenCalledWith({
         success: false,
         message: "Category already exists",
@@ -170,7 +170,7 @@ describe("createCategoryController function", () => {
 
       const response = await act(data);
 
-      expect(response.status).toEqual(400);
+      expect(response.status).toEqual(200);
       expect(response.body.success).toEqual(false);
     });
 
@@ -304,7 +304,7 @@ describe("updateCategoryController function", () => {
 
       await updateCategoryController(mockReq, mockRes);
 
-      expect(mockRes.status).toHaveBeenCalledWith(400);
+      expect(mockRes.status).toHaveBeenCalledWith(200);
       expect(mockRes.send).toHaveBeenCalledWith({
         success: false,
         message: "Category does not exist",
@@ -393,7 +393,7 @@ describe("updateCategoryController function", () => {
 
       const response = await act(data, { id: new mongoose.Types.ObjectId() });
 
-      expect(response.status).toEqual(400);
+      expect(response.status).toEqual(200);
       expect(response.body.success).toEqual(false);
     });
 

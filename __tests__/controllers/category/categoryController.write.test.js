@@ -84,7 +84,7 @@ describe("createCategoryController function", () => {
 
     await createCategoryController(mockReq, mockRes);
 
-    expect(mockRes.status).toHaveBeenCalledWith(400);
+    expect(mockRes.status).toHaveBeenCalledWith(200);
     expect(mockRes.send).toHaveBeenCalledWith({
       success: false,
       message: "Category already exists",
@@ -169,7 +169,7 @@ describe("updateCategoryController function", () => {
 
     await updateCategoryController(mockReq, mockRes);
 
-    expect(mockRes.status).toHaveBeenCalledWith(400);
+    expect(mockRes.status).toHaveBeenCalledWith(200);
     expect(mockRes.send).toHaveBeenCalledWith({
       success: false,
       message: "Category does not exist",
