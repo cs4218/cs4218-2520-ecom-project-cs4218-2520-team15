@@ -255,6 +255,7 @@ describe("createProductController function", () => {
 
       expect(response.status).toEqual(201);
       expect(response.body.success).toEqual(true);
+      expect(response.body.message).toEqual("Product created successfully");
     });
 
     it("should create product correctly if shipping is undefined", async () => {
@@ -271,6 +272,7 @@ describe("createProductController function", () => {
 
       expect(response.status).toEqual(201);
       expect(response.body.success).toEqual(true);
+      expect(response.body.message).toEqual("Product created successfully");
     });
 
     it("should return error if MongoDB has issues", async () => {
@@ -288,6 +290,7 @@ describe("createProductController function", () => {
 
       expect(response.status).toEqual(500);
       expect(response.body.success).toEqual(false);
+      expect(response.body.message).toEqual("Error in creating product");
     });
 
     it("should return error if server issues", async () => {
@@ -305,6 +308,7 @@ describe("createProductController function", () => {
 
       expect(response.status).toEqual(500);
       expect(response.body.success).toEqual(false);
+      expect(response.body.message).toEqual("Error in creating product");
     });
 
     it("should return error if user is not admin", async () => {
@@ -324,6 +328,7 @@ describe("createProductController function", () => {
 
       expect(response.status).toEqual(401);
       expect(response.body.success).toEqual(false);
+      expect(response.body.message).toEqual("Unauthorized Access");
     });
 
     it("should return error if authorization token is invalid", async () => {
@@ -340,6 +345,7 @@ describe("createProductController function", () => {
 
       expect(response.status).toEqual(401);
       expect(response.body.success).toEqual(false);
+      expect(response.body.message).toEqual("Invalid or expired token");
     });
 
     it("should return error if authorization token is expired", async () => {
@@ -364,6 +370,7 @@ describe("createProductController function", () => {
 
       expect(response.status).toEqual(401);
       expect(response.body.success).toEqual(false);
+      expect(response.body.message).toEqual("Invalid or expired token");
     });
   });
 });
@@ -686,6 +693,7 @@ describe("updateProductController function", () => {
 
       expect(response.status).toEqual(200);
       expect(response.body.success).toEqual(true);
+      expect(response.body.message).toEqual("Product updated successfully");
     });
 
     it("should update product correctly if shipping is undefined", async () => {
@@ -702,6 +710,7 @@ describe("updateProductController function", () => {
 
       expect(response.status).toEqual(200);
       expect(response.body.success).toEqual(true);
+      expect(response.body.message).toEqual("Product updated successfully");
     });
 
     it("should update product correctly if photo is undefined", async () => {
@@ -718,6 +727,7 @@ describe("updateProductController function", () => {
 
       expect(response.status).toEqual(200);
       expect(response.body.success).toEqual(true);
+      expect(response.body.message).toEqual("Product updated successfully");
     });
 
     it("should return error if product does not exist", async () => {
@@ -735,6 +745,7 @@ describe("updateProductController function", () => {
 
       expect(response.status).toEqual(400);
       expect(response.body.success).toEqual(false);
+      expect(response.body.message).toEqual("Product does not exist");
     });
 
     it("should return error if MongoDB has issues", async () => {
@@ -752,6 +763,7 @@ describe("updateProductController function", () => {
 
       expect(response.status).toEqual(500);
       expect(response.body.success).toEqual(false);
+      expect(response.body.message).toEqual("Error in updating product");
     });
 
     it("should return error if server issues", async () => {
@@ -769,6 +781,7 @@ describe("updateProductController function", () => {
 
       expect(response.status).toEqual(500);
       expect(response.body.success).toEqual(false);
+      expect(response.body.message).toEqual("Error in updating product");
     });
 
     it("should return error if user is not admin", async () => {
@@ -788,6 +801,7 @@ describe("updateProductController function", () => {
 
       expect(response.status).toEqual(401);
       expect(response.body.success).toEqual(false);
+      expect(response.body.message).toEqual("Unauthorized Access");
     });
 
     it("should return error if authorization token is invalid", async () => {
@@ -804,6 +818,7 @@ describe("updateProductController function", () => {
 
       expect(response.status).toEqual(401);
       expect(response.body.success).toEqual(false);
+      expect(response.body.message).toEqual("Invalid or expired token");
     });
 
     it("should return error if authorization token is expired", async () => {
@@ -828,6 +843,7 @@ describe("updateProductController function", () => {
 
       expect(response.status).toEqual(401);
       expect(response.body.success).toEqual(false);
+      expect(response.body.message).toEqual("Invalid or expired token");
     });
   });
 });
@@ -984,6 +1000,7 @@ describe("deleteProductController function", () => {
 
       expect(response.status).toEqual(200);
       expect(response.body.success).toEqual(true);
+      expect(response.body.message).toEqual("Product deleted successfully");
     });
 
     it("should return ok if product does not exist", async () => {
@@ -991,6 +1008,7 @@ describe("deleteProductController function", () => {
 
       expect(response.status).toEqual(200);
       expect(response.body.success).toEqual(true);
+      expect(response.body.message).toEqual("Product deleted successfully");
     });
 
     it("should return error if product has orders", async () => {
@@ -1004,6 +1022,9 @@ describe("deleteProductController function", () => {
 
       expect(response.status).toEqual(400);
       expect(response.body.success).toEqual(false);
+      expect(response.body.message).toEqual(
+        "Unable to delete product with orders",
+      );
     });
 
     it("should return error if MongoDB has issues", async () => {
@@ -1011,6 +1032,7 @@ describe("deleteProductController function", () => {
 
       expect(response.status).toEqual(500);
       expect(response.body.success).toEqual(false);
+      expect(response.body.message).toEqual("Error in deleting product");
     });
 
     it("should return error if user is not admin", async () => {
@@ -1022,6 +1044,7 @@ describe("deleteProductController function", () => {
 
       expect(response.status).toEqual(401);
       expect(response.body.success).toEqual(false);
+      expect(response.body.message).toEqual("Unauthorized Access");
     });
 
     it("should return error if authorization token is invalid", async () => {
@@ -1029,6 +1052,7 @@ describe("deleteProductController function", () => {
 
       expect(response.status).toEqual(401);
       expect(response.body.success).toEqual(false);
+      expect(response.body.message).toEqual("Invalid or expired token");
     });
 
     it("should return error if authorization token is expired", async () => {
@@ -1045,6 +1069,7 @@ describe("deleteProductController function", () => {
 
       expect(response.status).toEqual(401);
       expect(response.body.success).toEqual(false);
+      expect(response.body.message).toEqual("Invalid or expired token");
     });
   });
 });
