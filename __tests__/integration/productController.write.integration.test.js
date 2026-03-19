@@ -991,9 +991,6 @@ describe("deleteProductController function", () => {
     afterAll(async () => {
       await userModel.deleteMany({});
     });
-    afterEach(async () => {
-      jest.clearAllMocks();
-    });
 
     it("should delete product correctly", async () => {
       const response = await act();
