@@ -57,6 +57,7 @@ describe("Integration tests with frontend API calls", () => {
                 answer: 'existanswer',
             });
 
+        expect(await userModel.countDocuments()).toEqual(1);
         expect(res.status).toBe(200);
         expect(res.body.success).toBe(false);
         expect(res.body.message).toBe('User is already registered. Please login.');
@@ -110,6 +111,8 @@ describe("Integration tests with frontend API calls", () => {
         });
 
         // Verify if db saves user
+        expect(await userModel.countDocuments()).toEqual(2);
+
         const savedUser = await userModel.findOne({ email: 'newuser@gmail.com' });
         expect(savedUser).toBeTruthy();
         expect(savedUser.name).toBe('New User');

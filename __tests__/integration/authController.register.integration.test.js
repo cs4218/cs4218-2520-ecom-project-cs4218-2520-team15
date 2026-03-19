@@ -66,6 +66,7 @@ describe("Integration tests for registration components", () => {
 
             await registerController(req, res);
 
+            expect(await userModel.countDocuments()).toEqual(1);
             expect(res.status).toHaveBeenCalledWith(200);
             expect(res.send).toHaveBeenCalledWith({
                 success: false,
@@ -129,6 +130,8 @@ describe("Integration tests for registration components", () => {
             });
 
             // Verify if db saves user
+            expect(await userModel.countDocuments()).toEqual(2);
+
             const savedUser = await userModel.findOne({ email: 'newuser@gmail.com' });
             expect(savedUser).toBeTruthy();
             expect(savedUser.name).toBe('New User');
