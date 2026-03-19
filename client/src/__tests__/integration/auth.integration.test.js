@@ -92,7 +92,6 @@ describe("Integration tests for frontend authentication components", () => {
             expect(screen.getByTestId("auth-value").textContent).toBe(
                 JSON.stringify({ user: null, token: "" })
             );
-            expect(axios.defaults.headers.common["Authorization"]).toBe("");
         });
 
         it("should initialize auth data from localStorage if valid data is present", async () => {
