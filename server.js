@@ -2,6 +2,8 @@ import express from "express";
 import colors from "colors";
 import dotenv from "dotenv";
 import morgan from "morgan";
+import { MongoMemoryServer } from "mongodb-memory-server";
+import mongoose from "mongoose";
 import connectDB from "./config/db.js";
 import authRoutes from './routes/authRoute.js';
 import categoryRoutes from './routes/categoryRoutes.js';
@@ -15,7 +17,22 @@ dotenv.config();
 //database config
 // only connect when not running tests; tests use an in-memory MongoDB and manage connection
 if (process.env.NODE_ENV !== 'test') {
-    connectDB();
+    if (process.env.NODE_ENV == 'ui-test') {
+        MongoMemoryServer.create().then(async (mongoServer) => {
+            process.env.MONGO_URL = mongoServer.getUri();
+            connectDB();
+
+            const cleanup = async () => {
+                await mongoose.disconnect();
+                await mongoServer.stop();
+                process.exit(0);
+            };
+            process.on('SIGTERM', cleanup);
+            process.on('SIGINT', cleanup);
+        });
+    } else {
+        connectDB();
+    }
 }
 
 const app = express();
@@ -30,7 +47,9 @@ app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/category", categoryRoutes);
 app.use("/api/v1/product", productRoutes);
 
-app.use("/api/v1/test", testRoutes);
+if (process.env.NODE_ENV == 'ui-test') {
+    app.use("/api/v1/test", testRoutes);
+}
 
 // rest api
 

@@ -78,10 +78,13 @@ export default defineConfig({
   /* Run your local dev server before starting the tests */
   webServer: [
     {
-      command: 'npm start',
+      command: 'node server.js',
       url: 'http://localhost:6060',
       reuseExistingServer: !process.env.CI,
       timeout: 120000,
+      env: {
+        NODE_ENV: 'ui-test',
+      }
     },
     {
       command: 'npm run client',

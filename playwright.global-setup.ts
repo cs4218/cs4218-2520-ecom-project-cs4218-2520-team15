@@ -3,10 +3,8 @@ import { request, FullConfig } from '@playwright/test';
 async function globalSetup(config: FullConfig) {
   // Set test environment variables
   process.env.NODE_ENV = 'test';
-  process.env.MONGO_URL = process.env.MONGO_URL || 'mongodb://localhost:27017/ecom-test';
   
   console.log('🚀 Playwright Global Setup Started');
-  console.log(`📦 Database: ${process.env.MONGO_URL}`);
   
   // Give server time to start
   await new Promise(resolve => setTimeout(resolve, 2000));
