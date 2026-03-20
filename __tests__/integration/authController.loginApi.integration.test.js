@@ -38,7 +38,6 @@ describe("Integration tests with frontend API calls", () => {
 
     afterEach(async () => {
         await userModel.deleteMany({});
-        jest.clearAllMocks();
     });
 
     afterAll(async () => {
@@ -95,7 +94,7 @@ describe("Integration tests with frontend API calls", () => {
     });
 
     it("should login user successfully", async () => {
-        const token = await JWT.sign({ _id: mock_user0._id }, process.env.JWT_SECRET, {
+        const token = JWT.sign({ _id: mock_user0._id }, process.env.JWT_SECRET, {
             expiresIn: "7d",
         });
 
