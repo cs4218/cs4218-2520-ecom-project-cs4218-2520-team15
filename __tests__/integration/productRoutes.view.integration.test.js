@@ -218,7 +218,7 @@ describe("Integration Tests for Viewing Product Details & Category Product (API 
   // ============================================================
   describe("Tests for GET /api/v1/product/product-category/:slug/:page (get category wise product)", () => {
     it("should return 200 and fetch category products successfully", async () => {
-      const res = await request(app).get(`/api/v1/product/product-category/${phones_category.slug}/${1}`);
+      const res = await request(app).get(`/api/v1/product/product-category/${phones_category.slug}/1`);
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
@@ -237,7 +237,7 @@ describe("Integration Tests for Viewing Product Details & Category Product (API 
     });
 
     it("should return 404 when category not found", async () => {
-      const res = await request(app).get(`/api/v1/product/product-category/non-existent/${1}`);
+      const res = await request(app).get(`/api/v1/product/product-category/non-existent/1`);
 
       expect(res.status).toBe(404);
       expect(res.body.success).toBe(false);
@@ -248,7 +248,7 @@ describe("Integration Tests for Viewing Product Details & Category Product (API 
       try {
         await mongoose.disconnect();
 
-        const res = await request(app).get(`/api/v1/product/product-category/${phones_category.slug}/${1}`);
+        const res = await request(app).get(`/api/v1/product/product-category/${phones_category.slug}/1`);
 
         expect(res.status).toBe(500);
         expect(res.body.success).toBe(false);

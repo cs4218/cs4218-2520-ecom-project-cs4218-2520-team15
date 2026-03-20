@@ -285,7 +285,7 @@ describe("Integration Tests for Home & Filter Products (API calls)", () => {
   // ============================================================
   describe("Tests for GET /api/v1/product/product-list/:page (product per page)", () => {
     it("should return 200 and list products on page 1", async () => {
-      const res = await request(app).get(`/api/v1/product/product-list/${1}`);
+      const res = await request(app).get(`/api/v1/product/product-list/1`);
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
@@ -351,7 +351,7 @@ describe("Integration Tests for Home & Filter Products (API calls)", () => {
         }
       }).save()
 
-      const res = await request(app).get(`/api/v1/product/product-list/${2}`);
+      const res = await request(app).get(`/api/v1/product/product-list/2`);
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
@@ -363,7 +363,7 @@ describe("Integration Tests for Home & Filter Products (API calls)", () => {
       try {
         await mongoose.disconnect();
 
-        const res = await request(app).get(`/api/v1/product/product-list/${1}`);
+        const res = await request(app).get(`/api/v1/product/product-list/1`);
 
         expect(res.status).toBe(500);
         expect(res.body.success).toBe(false);
