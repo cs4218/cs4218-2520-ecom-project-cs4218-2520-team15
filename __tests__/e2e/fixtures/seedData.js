@@ -100,7 +100,7 @@ export const TEST_PRODUCTS = [
     slug: "tamagotchi",
     description: "Cute egg pet",
     price: 21.99,
-    categorySlug: "books",
+    categorySlug: "electronics",
     quantity: 10,
     shipping: true,
     photoFilename: "tamagotchi.jpeg",
