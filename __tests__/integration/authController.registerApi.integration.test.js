@@ -35,7 +35,6 @@ describe("Integration tests with frontend API calls", () => {
 
     afterEach(async () => {
         await userModel.deleteMany({});
-        jest.clearAllMocks();
     });
 
     afterAll(async () => {
