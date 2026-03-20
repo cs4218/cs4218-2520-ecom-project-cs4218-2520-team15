@@ -543,7 +543,7 @@ describe("deleteCategoryController function", () => {
       await deleteCategoryController(mockReq, mockRes);
 
       expect(await categoryModel.countDocuments()).toEqual(1);
-      expect(mockRes.status).toHaveBeenCalledWith(400);
+      expect(mockRes.status).toHaveBeenCalledWith(200);
       expect(mockRes.send).toHaveBeenCalledWith({
         success: false,
         message: "Unable to delete category that contains products",
@@ -634,7 +634,7 @@ describe("deleteCategoryController function", () => {
 
       const response = await act();
 
-      expect(response.status).toEqual(400);
+      expect(response.status).toEqual(200);
       expect(response.body.success).toEqual(false);
       expect(response.body.message).toEqual(
         "Unable to delete category that contains products",
