@@ -37,7 +37,6 @@ describe("Integration tests for forgot password components", () => {
 
     afterEach(async () => {
         await userModel.deleteMany({});
-        jest.clearAllMocks();
     });
 
     afterAll(async () => {
