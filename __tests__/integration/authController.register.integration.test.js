@@ -74,6 +74,24 @@ describe("Integration tests for registration components", () => {
             });
         });
 
+        it("should return error if missing parameters", async () => {
+             req.body = {
+                name: 'Existing User',
+                email: 'existuser@gmail.com',
+                // phone: '1234567890',
+                address: 'existaddr',
+                password: 'existhashedpassword',
+                answer: 'existanswer',
+            };
+
+            await registerController(req, res);
+
+            expect(await userModel.countDocuments()).toEqual(1);
+            expect(res.send).toHaveBeenCalledWith({
+                message: "Phone number is required for registration.",
+            });
+        })
+
         it("should return 500 if database has errors", async () => {
             try {
                 req.body = {
