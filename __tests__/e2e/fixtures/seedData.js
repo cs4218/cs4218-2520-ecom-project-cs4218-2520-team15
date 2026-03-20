@@ -15,6 +15,8 @@ export const TEST_PRODUCTS = [
     categorySlug: "electronics", // resolved to _id in controller
     quantity: 30,
     shipping: true,
+    photoFilename: "laptop.jpeg",
+    contentType: "image/jpeg",
   },
   {
     name: "Smartphone",
@@ -24,6 +26,8 @@ export const TEST_PRODUCTS = [
     categorySlug: "electronics",
     quantity: 50,
     shipping: false,
+    photoFilename: "smartphone.jpeg",
+    contentType: "image/jpeg",
   },
   {
     name: "Textbook",
@@ -33,6 +37,8 @@ export const TEST_PRODUCTS = [
     categorySlug: "books",
     quantity: 50,
     shipping: false,
+    photoFilename: "textbook.jpeg",
+    contentType: "image/jpeg",
   },
   {
     name: "Novel",
@@ -42,6 +48,8 @@ export const TEST_PRODUCTS = [
     categorySlug: "books",
     quantity: 200,
     shipping: true,
+    photoFilename: "novel.jpeg",
+    contentType: "image/jpeg",
   },
   {
     name: "The Law of Contract in Singapore",
@@ -51,6 +59,8 @@ export const TEST_PRODUCTS = [
     categorySlug: "books",
     quantity: 200,
     shipping: true,
+    photoFilename: "law-book.jpeg",
+    contentType: "image/jpeg",
   },
   {
     name: "NUS T-shirt",
@@ -60,6 +70,8 @@ export const TEST_PRODUCTS = [
     categorySlug: "clothing",
     quantity: 200,
     shipping: true,
+    photoFilename: "nus-tshirt.jpeg",
+    contentType: "image/jpeg",
   },
 ];
 
