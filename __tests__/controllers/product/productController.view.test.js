@@ -342,7 +342,7 @@ describe("Product Controller Unit Tests (related to Product View)", () => {
     expect(limitMock).toHaveBeenCalledWith(3);
     expect(populateMock).toHaveBeenCalledWith("category");
 
-    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.status).toHaveBeenCalledWith(500);
     const sentData = res.send.mock.calls[0][0];
     expect(sentData.success).toBe(false);
     expect(sentData.message).toBe("Error while getting related products");
