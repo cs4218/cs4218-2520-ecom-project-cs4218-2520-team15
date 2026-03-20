@@ -9,11 +9,9 @@ import { TEST_CATEGORIES, TEST_ORDERS, TEST_PRODUCTS, TEST_USERS } from "../__te
 
 import fs from "fs";
 import path from "path";
-import { fileURLToPath } from "url";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const IMAGES_DIR = path.join(__dirname, "../__tests__/e2e/fixtures/images");
+// Use process.cwd() for path resolution - works in both Jest (CommonJS) and Node.js (ES modules)
+const IMAGES_DIR = path.join(process.cwd(), "__tests__/e2e/fixtures/images");
 
 export const seedDatabase = async (req, res) => {
   try {
