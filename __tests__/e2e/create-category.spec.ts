@@ -3,7 +3,7 @@
  */
 
 import { expect, Page, test } from "@playwright/test";
-import { TEST_USERS } from "./fixtures/seedData";
+import { TEST_CATEGORIES, TEST_USERS } from "./fixtures/seedData";
 
 const ADMIN = TEST_USERS[0];
 
@@ -74,6 +74,24 @@ test.describe("Admin Create Category", () => {
 
       await expect(page.getByRole("cell", { name: category })).toBeVisible();
     });
+  });
+
+  test("should not be able to create new category with same name as an existing category", async ({
+    page,
+  }) => {
+    const category = TEST_CATEGORIES[0].name;
+
+    const categoryInput = page.getByRole("textbox", {
+      name: "Enter new category",
+    });
+    await categoryInput.click();
+    await categoryInput.fill(category);
+    await page.getByRole("button", { name: "Submit" }).click();
+
+    await expect(
+      page.locator("div").filter({ hasText: "Category already exists" }).nth(4),
+    ).toBeVisible();
+    await expect(page.locator("td", { hasText: category })).toHaveCount(1);
   });
 
   test.describe(async () => {
