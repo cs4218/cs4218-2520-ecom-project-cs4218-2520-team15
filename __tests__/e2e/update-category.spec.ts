@@ -8,7 +8,7 @@ import { TEST_USERS } from "./fixtures/seedData";
 const ADMIN = TEST_USERS[0];
 
 test.describe("Admin Update Category", () => {
-  const act = async (page: Page, category: string) => {
+  const setup = async (page: Page, category: string) => {
     const placeholder = `Placeholder ${category}`;
     await test.step("create placeholder category", async () => {
       const categoryInput = page.getByRole("textbox", {
@@ -18,9 +18,13 @@ test.describe("Admin Update Category", () => {
       await categoryInput.fill(placeholder);
       await page.getByRole("button", { name: "Submit" }).click();
     });
+  };
 
+  const act = async (page: Page, category: string) => {
     await page
-      .locator("tr", { has: page.locator("td", { hasText: placeholder }) })
+      .locator("tr", {
+        has: page.locator("td", { hasText: `Placeholder ${category}` }),
+      })
       .locator("button", { hasText: /^Edit$/ })
       .click();
     const categoryInput = page
@@ -83,6 +87,16 @@ test.describe("Admin Update Category", () => {
   test.describe(async () => {
     const category = "Category A";
 
+    test.beforeEach(async ({ page }) => {
+      /* Check that the pre-update state is correct since
+       * we are using a newly created category
+       */
+      await setup(page, category);
+      await expect(
+        page.getByRole("cell", { name: `Placeholder ${category}` }),
+      ).toBeVisible();
+    });
+
     test.afterEach(async ({ page }) => {
       await cleanup(page, category);
     });
@@ -96,6 +110,28 @@ test.describe("Admin Update Category", () => {
 
   test.describe(async () => {
     const category = "Category B";
+
+    test.beforeEach(async ({ page }) => {
+      /* Check that the pre-update state is correct since
+       * we are using a newly created category
+       */
+      const placeholder = `Placeholder ${category}`;
+      await setup(page, category);
+      await expect(page.getByRole("cell", { name: placeholder })).toBeVisible();
+      await page.getByRole("link", { name: "Create Product" }).click();
+      await page
+        .locator("div")
+        .filter({ hasText: /^Select a category$/ })
+        .nth(1)
+        .click();
+      const option = page
+        .locator("div")
+        .filter({ hasText: placeholder })
+        .nth(0);
+      await expect(option).toBeVisible();
+      await expect(option).toBeEnabled();
+      await page.getByRole("link", { name: "Create Category" }).click();
+    });
 
     test.afterEach(async ({ page }) => {
       await cleanup(page, category);
@@ -121,6 +157,23 @@ test.describe("Admin Update Category", () => {
   test.describe(async () => {
     const category = "Category C";
 
+    test.beforeEach(async ({ page }) => {
+      /* Check that the pre-update state is correct since
+       * we are using a newly created category
+       */
+      await setup(page, category);
+      await page.getByRole("link", { name: "Categories" }).click();
+      await page.getByRole("link", { name: "ALL CATEGORIES" }).click();
+      const categoryButton = page.getByRole("link", {
+        name: `Placeholder ${category}`,
+      });
+      await expect(categoryButton).toBeVisible();
+      await expect(categoryButton).toBeEnabled();
+      await page.getByRole("button", { name: ADMIN.name }).click();
+      await page.getByRole("link", { name: "DASHBOARD" }).click();
+      await page.getByRole("link", { name: "Create Category" }).click();
+    });
+
     test.afterEach(async ({ page }) => {
       await cleanup(page, category);
     });
@@ -141,6 +194,23 @@ test.describe("Admin Update Category", () => {
   test.describe(async () => {
     const category = "Category D";
 
+    test.beforeEach(async ({ page }) => {
+      /* Check that the pre-update state is correct since
+       * we are using a newly created category
+       */
+      await setup(page, category);
+      await page.getByRole("link", { name: "Home" }).click();
+      await page.getByRole("link", { name: "Categories" }).click();
+      const categoryButton = page.getByRole("link", {
+        name: `Placeholder ${category}`,
+      });
+      await expect(categoryButton).toBeVisible();
+      await expect(categoryButton).toBeEnabled();
+      await page.getByRole("button", { name: ADMIN.name }).click();
+      await page.getByRole("link", { name: "DASHBOARD" }).click();
+      await page.getByRole("link", { name: "Create Category" }).click();
+    });
+
     test.afterEach(async ({ page }) => {
       await cleanup(page, category);
     });
@@ -160,6 +230,22 @@ test.describe("Admin Update Category", () => {
 
   test.describe(async () => {
     const category = "Category E";
+
+    test.beforeEach(async ({ page }) => {
+      /* Check that the pre-update state is correct since
+       * we are using a newly created category
+       */
+      await setup(page, category);
+      await page.getByRole("link", { name: "Home" }).click();
+      const categoryFilter = page.getByRole("checkbox", {
+        name: `Placeholder ${category}`,
+      });
+      await expect(categoryFilter).toBeVisible();
+      await expect(categoryFilter).toBeEnabled();
+      await page.getByRole("button", { name: ADMIN.name }).click();
+      await page.getByRole("link", { name: "DASHBOARD" }).click();
+      await page.getByRole("link", { name: "Create Category" }).click();
+    });
 
     test.afterEach(async ({ page }) => {
       await cleanup(page, category);
