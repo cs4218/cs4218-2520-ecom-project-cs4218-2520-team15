@@ -105,6 +105,9 @@ test.describe("Admin Update Category", () => {
       await act(page, category);
 
       await expect(page.getByRole("cell", { name: category })).toBeVisible();
+      await expect(
+        page.getByRole("cell", { name: `Placeholder ${category}` }),
+      ).not.toBeVisible();
     });
   });
 
@@ -151,6 +154,9 @@ test.describe("Admin Update Category", () => {
       const option = page.locator("div").filter({ hasText: category }).nth(0);
       await expect(option).toBeVisible();
       await expect(option).toBeEnabled();
+      await expect(
+        page.locator("link", { hasText: `Placeholder ${category}` }),
+      ).not.toBeVisible();
     });
   });
 
@@ -188,6 +194,9 @@ test.describe("Admin Update Category", () => {
       const categoryButton = page.getByRole("link", { name: category });
       await expect(categoryButton).toBeVisible();
       await expect(categoryButton).toBeEnabled();
+      await expect(
+        page.getByRole("link", { name: `Placeholder ${category}` }),
+      ).not.toBeVisible();
     });
   });
 
@@ -225,6 +234,9 @@ test.describe("Admin Update Category", () => {
       const categoryButton = page.getByRole("link", { name: category });
       await expect(categoryButton).toBeVisible();
       await expect(categoryButton).toBeEnabled();
+      await expect(
+        page.getByRole("link", { name: `Placeholder ${category}` }),
+      ).not.toBeVisible();
     });
   });
 
@@ -260,6 +272,9 @@ test.describe("Admin Update Category", () => {
       const categoryFilter = page.getByRole("checkbox", { name: category });
       await expect(categoryFilter).toBeVisible();
       await expect(categoryFilter).toBeEnabled();
+      await expect(
+        page.getByRole("checkbox", { name: `Placeholder ${category}` }),
+      ).not.toBeVisible();
     });
   });
 });
