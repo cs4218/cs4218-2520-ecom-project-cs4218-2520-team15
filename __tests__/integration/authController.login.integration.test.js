@@ -72,6 +72,21 @@ describe("Integration tests for login components", () => {
             });
         });
 
+        it("should return error if missing parameter", async () => {
+            req.body = {
+                email: 'existuser@gmail.com',
+                // password: 'existpassword',
+            }
+
+            await loginController(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(200);
+            expect(res.send).toHaveBeenCalledWith({
+                success: false,
+                message: 'Invalid email or password',
+            });
+        })
+
         it("should return 500 if database has errors", async () => {
             try {
                 req.body = {
