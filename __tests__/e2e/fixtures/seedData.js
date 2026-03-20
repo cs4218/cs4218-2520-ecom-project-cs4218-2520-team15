@@ -73,6 +73,39 @@ export const TEST_PRODUCTS = [
     photoFilename: "nus-tshirt.jpeg",
     contentType: "image/jpeg",
   },
+  {
+    name: "BlackBerry Phone",
+    slug: "blackberry-phone",
+    description: "Blackberry, strawberry, raspberry, blueberry, cranberry, gooseberry", // long description to see if truncated
+    price: 89.99,
+    categorySlug: "electronics",
+    quantity: 10,
+    shipping: true,
+    photoFilename: "blackberry-phone.jpg",
+    contentType: "image/jpeg",
+  },
+  {
+    name: "Coding For Dummies Book",
+    slug: "coding-for-dummies-book",
+    description: "Good read for me",
+    price: 15.99,
+    categorySlug: "books",
+    quantity: 10,
+    shipping: true,
+    photoFilename: "coding-for-dummies-book.jpg",
+    contentType: "image/jpeg",
+  },
+  {
+    name: "Tamagotchi",
+    slug: "tamagotchi",
+    description: "Cute egg pet",
+    price: 21.99,
+    categorySlug: "books",
+    quantity: 10,
+    shipping: true,
+    photoFilename: "tamagotchi.jpeg",
+    contentType: "image/jpeg",
+  },
 ];
 
 export const TEST_USERS = [
