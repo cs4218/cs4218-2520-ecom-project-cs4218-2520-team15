@@ -368,7 +368,7 @@ describe("Integration Tests for Viewing Product Details (Single + Category)", ()
       expect(sentData.products).toHaveLength(1);
       expect(sentData.total).toBe(4);
 
-      // Can't check this product (since we don't know which is the oldest createdAt producrt)
+      // Can't check this product (since we don't know which is the oldest createdAt product)
     });
 
     it("should handle error when no category is found", async () => {
