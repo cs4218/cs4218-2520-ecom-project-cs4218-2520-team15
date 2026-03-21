@@ -31,17 +31,21 @@ test.describe("Admin User Management", () => {
 
 test("should display list of users with correct details", async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'All Users' })).toBeVisible();
-  
+
   const userRows = page.locator("table tbody tr");
-  await expect(userRows).toHaveCount(2);
+    await expect(userRows).toHaveCount(2);
 
-  await expect(page.getByRole("cell", { name: ADMIN.name })).toBeVisible();
-  await expect(page.getByRole("cell", { name: ADMIN.email })).toBeVisible();
-  await expect(page.getByRole("cell", { name: "Admin" })).toBeVisible();
+    // locate the specific row for each user (avoid global role collisions)
+    const adminRow = page.locator("table tbody tr", { hasText: ADMIN.email }).first();
+    await expect(adminRow.getByRole("cell", { name: ADMIN.name })).toBeVisible();
+    await expect(adminRow.getByRole("cell", { name: ADMIN.email })).toBeVisible();
+    // role is in the 5th column (index 4). Use nth() to avoid Playwright strict-mode collisions.
+    await expect(adminRow.locator('td').nth(4)).toHaveText('Admin');
 
-  await expect(page.getByRole("cell", { name: NORMAL_USER.name })).toBeVisible();
-  await expect(page.getByRole("cell", { name: NORMAL_USER.email })).toBeVisible();
-  await expect(page.getByRole("cell", { name: "User" })).toBeVisible();
+    const normalRow = page.locator("table tbody tr", { hasText: NORMAL_USER.email }).first();
+    await expect(normalRow.getByRole("cell", { name: NORMAL_USER.name })).toBeVisible();
+    await expect(normalRow.getByRole("cell", { name: NORMAL_USER.email })).toBeVisible();
+    await expect(normalRow.locator('td').nth(4)).toHaveText('User');
   });
 
 });
