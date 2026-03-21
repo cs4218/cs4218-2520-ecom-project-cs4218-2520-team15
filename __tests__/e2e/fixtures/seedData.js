@@ -4,6 +4,7 @@ export const TEST_CATEGORIES = [
   { name: "Electronics", slug: "electronics" },
   { name: "Clothing", slug: "clothing" },
   { name: "Books", slug: "books" },
+  { name: "Stationeries", slug: "stationeries" },
 ];
 
 export const TEST_PRODUCTS = [
