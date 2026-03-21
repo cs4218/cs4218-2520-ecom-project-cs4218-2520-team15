@@ -483,7 +483,7 @@ describe("Product Controller Unit Tests (related to Product View)", () => {
 
     // ----- Error handling -----
 
-    it("should return 400 with success false when the find query fails", async () => {
+    it("should return 500 with success false when the find query fails", async () => {
       // Arrange
       const dbError = new Error("DB error");
       req.body = { checked: ["cat1"], radio: [10, 100], page: 1 };
@@ -499,13 +499,13 @@ describe("Product Controller Unit Tests (related to Product View)", () => {
       await productFiltersController(req, res);
 
       // Assert
-      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.status).toHaveBeenCalledWith(500);
       expect(res.send).toHaveBeenCalledWith(
         expect.objectContaining({ success: false })
       );
     });
 
-    it("should return 400 with success false when countDocuments fails", async () => {
+    it("should return 500 with success false when countDocuments fails", async () => {
       // Arrange
       const dbError = new Error("Count failed");
       req.body = { checked: ["cat1"], radio: [], page: 1 };
@@ -521,7 +521,7 @@ describe("Product Controller Unit Tests (related to Product View)", () => {
       await productFiltersController(req, res);
 
       // Assert
-      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.status).toHaveBeenCalledWith(500);
       expect(res.send).toHaveBeenCalledWith(
         expect.objectContaining({ success: false })
       );
@@ -599,7 +599,7 @@ describe("Product Controller Unit Tests (related to Product View)", () => {
       expect(estimatedDocumentCountMock).toHaveBeenCalled();
     });
 
-    it("should return 400 with success false when database query fails", async () => {
+    it("should return 500 with success false when database query fails", async () => {
       // Arrange
       const dbError = new Error("DB error");
       productModel.find.mockReturnValue({
@@ -610,7 +610,7 @@ describe("Product Controller Unit Tests (related to Product View)", () => {
       await productCountController(req, res);
 
       // Assert
-      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.status).toHaveBeenCalledWith(500);
       expect(res.send).toHaveBeenCalledWith(
         expect.objectContaining({ success: false })
       );
@@ -772,7 +772,7 @@ describe("Product Controller Unit Tests (related to Product View)", () => {
       );
     });
 
-    it("should return 400 with success false when database query fails", async () => {
+    it("should return 500 with success false when database query fails", async () => {
       // Arrange
       const dbError = new Error("DB error");
       req.params = { page: 1 };
@@ -787,7 +787,7 @@ describe("Product Controller Unit Tests (related to Product View)", () => {
       await productListController(req, res);
 
       // Assert
-      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.status).toHaveBeenCalledWith(500);
       expect(res.send).toHaveBeenCalledWith(
         expect.objectContaining({ success: false })
       );
