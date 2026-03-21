@@ -77,7 +77,7 @@ export const TEST_PRODUCTS = [
   {
     name: "BlackBerry Phone",
     slug: "blackberry-phone",
-    description: "Blackberry, strawberry, raspberry, blueberry, cranberry, gooseberry", // long description to see if truncated
+    description: "Blackberry, strawberry, raspberry, blueberry, cranberry, gooseberry",
     price: 89.99,
     categorySlug: "electronics",
     quantity: 10,
