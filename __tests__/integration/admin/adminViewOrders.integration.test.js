@@ -269,7 +269,6 @@ describe('Admin view orders integration tests', () => {
         expect(order).toHaveProperty('createdAt');
         expect(order.products).toHaveLength(1);
         expect(order.products[0].name).toBe('Widget');
-        // expect(order.products[0]).not.toHaveProperty('photo');
       });
 
     });
