@@ -16,6 +16,7 @@ test.describe("Admin Delete Category", () => {
       await categoryInput.click();
       await categoryInput.fill(category);
       await page.getByRole("button", { name: "Submit" }).click();
+      await page.waitForResponse("/api/v1/category/create-category");
     });
   };
 
@@ -26,6 +27,7 @@ test.describe("Admin Delete Category", () => {
       })
       .locator("button", { hasText: /^Delete$/ })
       .click();
+    await page.waitForResponse(/\/api\/v1\/category\/delete-category\/.*/);
     await expect(
       page.locator("div").filter({ hasText: "Category is deleted" }).nth(4),
     ).toBeVisible();
@@ -47,6 +49,7 @@ test.describe("Admin Delete Category", () => {
       await passwordInput.click();
       await passwordInput.fill(ADMIN.password);
       await page.getByRole("button", { name: "LOGIN" }).click();
+      await page.waitForResponse("/api/v1/auth/login");
     });
 
     await test.step("navigate to admin dashboard → create category tab", async () => {
@@ -57,7 +60,7 @@ test.describe("Admin Delete Category", () => {
   });
 
   test.describe(async () => {
-    const category = "Category A";
+    const category = `Category ${new Date().getTime()}`;
 
     test.beforeEach(async ({ page }) => {
       /* Check that the pre-delete state is correct since
@@ -87,17 +90,19 @@ test.describe("Admin Delete Category", () => {
       })
       .locator("button", { hasText: /^Delete$/ })
       .click();
+    await page.waitForResponse(/\/api\/v1\/category\/delete-category\/.*/);
 
     await expect(
-      page.locator("div", {
-        hasText: /^Unable to delete category that contains products$/,
-      }),
+      page
+        .locator("div")
+        .filter({ hasText: "Unable to delete category" })
+        .nth(4),
     ).toBeVisible();
     await expect(page.getByRole("cell", { name: category })).toBeVisible();
   });
 
   test.describe(async () => {
-    const category = "Category B";
+    const category = `Category ${new Date().getTime()}`;
 
     test.beforeEach(async ({ page }) => {
       /* Check that the pre-delete state is correct since
@@ -107,6 +112,7 @@ test.describe("Admin Delete Category", () => {
       await setup(page, category);
       await expect(page.getByRole("cell", { name: placeholder })).toBeVisible();
       await page.getByRole("link", { name: "Create Product" }).click();
+      await page.waitForResponse("/api/v1/category/get-category");
       await page
         .locator("div")
         .filter({ hasText: /^Select a category$/ })
@@ -126,6 +132,7 @@ test.describe("Admin Delete Category", () => {
     }) => {
       await act(page, category);
       await page.getByRole("link", { name: "Create Product" }).click();
+      await page.waitForResponse("/api/v1/category/get-category");
       await page
         .locator("div")
         .filter({ hasText: /^Select a category$/ })
@@ -139,7 +146,7 @@ test.describe("Admin Delete Category", () => {
   });
 
   test.describe(async () => {
-    const category = "Category C";
+    const category = `Category ${new Date().getTime()}`;
 
     test.beforeEach(async ({ page }) => {
       /* Check that the pre-delete state is correct since
@@ -148,6 +155,7 @@ test.describe("Admin Delete Category", () => {
       await setup(page, category);
       await page.getByRole("link", { name: "Categories" }).click();
       await page.getByRole("link", { name: "ALL CATEGORIES" }).click();
+      await page.waitForResponse("/api/v1/category/get-category");
       const categoryButton = page.getByRole("link", {
         name: category,
       });
@@ -164,6 +172,7 @@ test.describe("Admin Delete Category", () => {
       await act(page, category);
       await page.getByRole("link", { name: "Categories" }).click();
       await page.getByRole("link", { name: "ALL CATEGORIES" }).click();
+      await page.waitForResponse("/api/v1/category/get-category");
 
       await expect(
         page.getByRole("link", { name: category }),
@@ -172,7 +181,7 @@ test.describe("Admin Delete Category", () => {
   });
 
   test.describe(async () => {
-    const category = "Category D";
+    const category = `Category ${new Date().getTime()}`;
 
     test.beforeEach(async ({ page }) => {
       /* Check that the pre-delete state is correct since
@@ -180,6 +189,7 @@ test.describe("Admin Delete Category", () => {
        */
       await setup(page, category);
       await page.getByRole("link", { name: "Home" }).click();
+      await page.waitForResponse("/api/v1/category/get-category");
       await page.getByRole("link", { name: "Categories" }).click();
       const categoryButton = page.getByRole("link", {
         name: category,
@@ -196,6 +206,7 @@ test.describe("Admin Delete Category", () => {
     }) => {
       await act(page, category);
       await page.getByRole("link", { name: "Home" }).click();
+      await page.waitForResponse("/api/v1/category/get-category");
       await page.getByRole("link", { name: "Categories" }).click();
 
       await expect(
@@ -205,7 +216,7 @@ test.describe("Admin Delete Category", () => {
   });
 
   test.describe(async () => {
-    const category = "Category E";
+    const category = `Category ${new Date().getTime()}`;
 
     test.beforeEach(async ({ page }) => {
       /* Check that the pre-delete state is correct since
@@ -213,6 +224,7 @@ test.describe("Admin Delete Category", () => {
        */
       await setup(page, category);
       await page.getByRole("link", { name: "Home" }).click();
+      await page.waitForResponse("/api/v1/category/get-category");
       const categoryFilter = page.getByRole("checkbox", {
         name: category,
       });
@@ -228,6 +240,7 @@ test.describe("Admin Delete Category", () => {
     }) => {
       await act(page, category);
       await page.getByRole("link", { name: "Home" }).click();
+      await page.waitForResponse("/api/v1/category/get-category");
 
       await expect(
         page.getByRole("checkbox", { name: category }),
