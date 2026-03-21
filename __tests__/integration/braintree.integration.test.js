@@ -2,8 +2,6 @@
  * Student No: A0213002J
  */
 
-process.env.BRAINTREE_INTEGRATION_TEST = "true";
-
 jest.resetModules();
 jest.setTimeout(30000);
 
@@ -13,20 +11,12 @@ dotenv.config();
 process.env.NODE_ENV = "development";
 process.env.JWT_SECRET = "test-secret";
 
-jest.mock("../../middlewares/authMiddleware.js", () => ({
-  requireSignIn: (req, res, next) => {
-    req.user = { _id: "507f1f77bcf86cd799439011" };
-    next();
-  },
-  isAdmin: (req, res, next) => next(),
-}));
-
 import request from "supertest";
-import express from "express";
 import mongoose from "mongoose";
 import { MongoMemoryServer } from "mongodb-memory-server";
+import JWT from "jsonwebtoken";
 
-import productRoutes from "../../routes/productRoutes.js";
+import app from "../../server.js";
 
 import orderModel from "../../models/orderModel.js";
 import userModel from "../../models/userModel.js";
@@ -35,10 +25,10 @@ import categoryModel from "../../models/categoryModel.js";
 
 describe("Integration Test: Braintree Payment + Order DB", () => {
   let mongoServer;
-  let app;
   let category;
   let product;
   let testUser;
+  let authToken;
 
   beforeAll(async () => {
     mongoServer = await MongoMemoryServer.create();
@@ -50,10 +40,6 @@ describe("Integration Test: Braintree Payment + Order DB", () => {
     });
 
     await mongoose.connection.asPromise();
-    
-    app = express();
-    app.use(express.json());
-    app.use("/api/v1/product", productRoutes);
   });
 
   afterAll(async () => {
@@ -78,6 +64,12 @@ describe("Integration Test: Braintree Payment + Order DB", () => {
       answer: "testanswer",
       role: 0,
     });
+
+    authToken = JWT.sign(
+      { _id: testUser._id },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
 
     category = await categoryModel.create({
       name: "Electronics",
@@ -111,6 +103,7 @@ describe("Integration Test: Braintree Payment + Order DB", () => {
   test("should create order in database when payment succeeds", async () => {
     const res = await request(app)
       .post("/api/v1/product/braintree/payment")
+      .set("Authorization", authToken)
       .send({
         nonce: "fake-valid-nonce",
         cart: [{ _id: product._id.toString(), price: 10.00 }],
@@ -146,6 +139,7 @@ describe("Integration Test: Braintree Payment + Order DB", () => {
 
     const res = await request(app)
       .post("/api/v1/product/braintree/payment")
+      .set("Authorization", authToken)
       .send({
         nonce: "fake-valid-nonce",
         cart: cartItems,
@@ -162,6 +156,7 @@ describe("Integration Test: Braintree Payment + Order DB", () => {
   test("should NOT create order when payment fails", async () => {
     const res = await request(app)
       .post("/api/v1/product/braintree/payment")
+      .set("Authorization", authToken)
       .send({
         nonce: "fake-valid-nonce",
         cart: [{ _id: product._id.toString(), price: 2000.00 }],
@@ -176,6 +171,7 @@ describe("Integration Test: Braintree Payment + Order DB", () => {
   test("should handle empty cart gracefully", async () => {
     const res = await request(app)
       .post("/api/v1/product/braintree/payment")
+      .set("Authorization", authToken)
       .send({
         nonce: "fake-valid-nonce",
         cart: [],
