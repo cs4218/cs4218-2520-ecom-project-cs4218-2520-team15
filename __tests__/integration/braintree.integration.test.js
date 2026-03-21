@@ -8,9 +8,6 @@ jest.setTimeout(30000);
 import dotenv from "dotenv";
 dotenv.config();
 
-process.env.NODE_ENV = "development";
-process.env.JWT_SECRET = "test-secret";
-
 import request from "supertest";
 import mongoose from "mongoose";
 import { MongoMemoryServer } from "mongodb-memory-server";
