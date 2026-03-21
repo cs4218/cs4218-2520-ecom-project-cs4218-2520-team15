@@ -15,7 +15,7 @@ test.describe("Admin Create Category", () => {
     await categoryInput.click();
     await categoryInput.fill(category);
     await page.getByRole("button", { name: "Submit" }).click();
-
+    await page.waitForResponse("/api/v1/category/create-category");
     await expect(
       page
         .locator("div")
@@ -32,9 +32,7 @@ test.describe("Admin Create Category", () => {
       .locator("tr", { has: page.locator("td", { hasText: category }) })
       .locator("button", { hasText: /^Delete$/ })
       .click();
-    await expect(
-      page.locator("div").filter({ hasText: "Category is deleted" }).nth(4),
-    ).toBeVisible();
+    await page.waitForResponse(/\/api\/v1\/category\/delete-category\/.*/);
   };
 
   test.beforeEach(async ({ page }) => {
@@ -53,6 +51,7 @@ test.describe("Admin Create Category", () => {
       await passwordInput.click();
       await passwordInput.fill(ADMIN.password);
       await page.getByRole("button", { name: "LOGIN" }).click();
+      await page.waitForResponse("/api/v1/auth/login");
     });
 
     await test.step("navigate to admin dashboard → create category tab", async () => {
@@ -63,7 +62,7 @@ test.describe("Admin Create Category", () => {
   });
 
   test.describe(async () => {
-    const category = "Category A";
+    const category = `Category ${new Date().getTime()}`;
 
     test.afterEach(async ({ page }) => {
       await cleanup(page, category);
@@ -87,6 +86,7 @@ test.describe("Admin Create Category", () => {
     await categoryInput.click();
     await categoryInput.fill(category);
     await page.getByRole("button", { name: "Submit" }).click();
+    await page.waitForResponse("/api/v1/category/create-category");
 
     await expect(
       page.locator("div").filter({ hasText: "Category already exists" }).nth(4),
@@ -95,7 +95,7 @@ test.describe("Admin Create Category", () => {
   });
 
   test.describe(async () => {
-    const category = "Category B";
+    const category = `Category ${new Date().getTime()}`;
 
     test.afterEach(async ({ page }) => {
       await cleanup(page, category);
@@ -106,6 +106,7 @@ test.describe("Admin Create Category", () => {
     }) => {
       await act(page, category);
       await page.getByRole("link", { name: "Create Product" }).click();
+      await page.waitForResponse("/api/v1/category/get-category");
       await page
         .locator("div")
         .filter({ hasText: /^Select a category$/ })
@@ -119,7 +120,7 @@ test.describe("Admin Create Category", () => {
   });
 
   test.describe(async () => {
-    const category = "Category C";
+    const category = `Category ${new Date().getTime()}`;
 
     test.afterEach(async ({ page }) => {
       await cleanup(page, category);
@@ -131,6 +132,7 @@ test.describe("Admin Create Category", () => {
       await act(page, category);
       await page.getByRole("link", { name: "Categories" }).click();
       await page.getByRole("link", { name: "ALL CATEGORIES" }).click();
+      await page.waitForResponse("/api/v1/category/get-category");
 
       const categoryButton = page.getByRole("link", { name: category });
       await expect(categoryButton).toBeVisible();
@@ -139,7 +141,7 @@ test.describe("Admin Create Category", () => {
   });
 
   test.describe(async () => {
-    const category = "Category D";
+    const category = `Category ${new Date().getTime()}`;
 
     test.afterEach(async ({ page }) => {
       await cleanup(page, category);
@@ -150,6 +152,7 @@ test.describe("Admin Create Category", () => {
     }) => {
       await act(page, category);
       await page.getByRole("link", { name: "Home" }).click();
+      await page.waitForResponse("/api/v1/category/get-category");
       await page.getByRole("link", { name: "Categories" }).click();
 
       const categoryButton = page.getByRole("link", { name: category });
@@ -159,7 +162,7 @@ test.describe("Admin Create Category", () => {
   });
 
   test.describe(async () => {
-    const category = "Category E";
+    const category = `Category ${new Date().getTime()}`;
 
     test.afterEach(async ({ page }) => {
       await cleanup(page, category);
@@ -170,6 +173,7 @@ test.describe("Admin Create Category", () => {
     }) => {
       await act(page, category);
       await page.getByRole("link", { name: "Home" }).click();
+      await page.waitForResponse("/api/v1/category/get-category");
 
       const categoryFilter = page.getByRole("checkbox", { name: category });
       await expect(categoryFilter).toBeVisible();
