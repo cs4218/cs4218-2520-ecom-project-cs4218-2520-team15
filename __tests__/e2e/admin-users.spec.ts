@@ -1,4 +1,4 @@
-import { expect, Page, test } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
 import { TEST_USERS } from "./fixtures/seedData";
 
@@ -39,7 +39,6 @@ test("should display list of users with correct details", async ({ page }) => {
     const adminRow = page.locator("table tbody tr", { hasText: ADMIN.email }).first();
     await expect(adminRow.getByRole("cell", { name: ADMIN.name })).toBeVisible();
     await expect(adminRow.getByRole("cell", { name: ADMIN.email })).toBeVisible();
-    // role is in the 5th column (index 4). Use nth() to avoid Playwright strict-mode collisions.
     await expect(adminRow.locator('td').nth(4)).toHaveText('Admin');
 
     const normalRow = page.locator("table tbody tr", { hasText: NORMAL_USER.email }).first();
@@ -47,5 +46,5 @@ test("should display list of users with correct details", async ({ page }) => {
     await expect(normalRow.getByRole("cell", { name: NORMAL_USER.email })).toBeVisible();
     await expect(normalRow.locator('td').nth(4)).toHaveText('User');
   });
-
+  
 });
