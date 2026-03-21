@@ -3,16 +3,14 @@
  */
 
 import { test, expect } from '@playwright/test';
+import { TEST_USERS } from './fixtures/seedData.js';
 
 test.describe.configure({ mode: 'serial' });
 
 test.describe('S8 - Checkout and payment happy path', () => {
   const baseURL = 'http://localhost:3000';
   
-  const testUser = {
-    email: 'e2etest_normal_user@example.com',
-    password: 'TestNormal@12345'
-  };
+  const testUser = TEST_USERS.find(user => user.role === 0);
 
   test.beforeEach(async ({ page }) => {
     await page.goto(baseURL);
@@ -20,10 +18,9 @@ test.describe('S8 - Checkout and payment happy path', () => {
     
     await page.goto(`${baseURL}/login`);
     
-    await page.fill('input[type="email"]', testUser.email);
-    await page.fill('input[type="password"]', testUser.password);
-    
-    await page.click('button[type="submit"].btn-primary');
+    await page.getByRole('textbox', { name: 'Enter Your Email' }).fill(testUser.email);
+    await page.getByRole('textbox', { name: 'Enter Your Password' }).fill(testUser.password);
+    await page.getByRole('button', { name: 'LOGIN' }).click();
     
     await page.waitForURL(baseURL + '/', { timeout: 10000 });
     
@@ -40,12 +37,12 @@ test.describe('S8 - Checkout and payment happy path', () => {
     const productName = await firstProduct.locator('.card-title').first().textContent();
     const productPrice = await firstProduct.locator('.card-price').textContent();
     
-    await firstProduct.locator('button:has-text("ADD TO CART")').click();
+    await page.getByRole('button', { name: 'ADD TO CART' }).first().click();
     await page.waitForTimeout(1000);
     
     await expect(page.locator('.ant-badge-count')).toHaveText('1');
 
-    await page.goto(`${baseURL}/cart`);
+    await page.getByRole('link', { name: 'Cart' }).click();
     await page.waitForSelector('.cart-page', { timeout: 10000 });
     
     await expect(page.locator('p:has-text("You Have 1 items in your cart")')).toBeVisible();
@@ -56,21 +53,20 @@ test.describe('S8 - Checkout and payment happy path', () => {
     const totalElement = page.locator('h4:has-text("Total")');
     await expect(totalElement).toBeVisible();
 
+    await page.waitForResponse('/api/v1/product/braintree/token');
     await page.waitForSelector('iframe[name*="number"]', { timeout: 15000 });
     
-    await page.waitForTimeout(2000);
+    const cardNumberFrame = page.frameLocator('iframe[name="braintree-hosted-field-number"]').first();
+    const expirationFrame = page.frameLocator('iframe[name="braintree-hosted-field-expirationDate"]').first();
+    const cvvFrame = page.frameLocator('iframe[name="braintree-hosted-field-cvv"]').first();
     
-    const cardNumberFrame = page.frameLocator('iframe[name*="number"]').first();
-    const expirationFrame = page.frameLocator('iframe[name*="expiration"]').first();
-    const cvvFrame = page.frameLocator('iframe[name*="cvv"]').first();
-    
-    await cardNumberFrame.locator('#credit-card-number').fill('4111111111111111');
-    await expirationFrame.locator('#expiration').fill('1228');
-    await cvvFrame.locator('#cvv').fill('123');
+    await cardNumberFrame.getByRole('textbox', { name: 'Credit Card Number' }).fill('4111111111111111');
+    await expirationFrame.getByRole('textbox', { name: 'Expiration Date' }).fill('1228');
+    await cvvFrame.getByRole('textbox', { name: 'CVV' }).fill('123');
     
     await page.waitForTimeout(1000);
 
-    const paymentBtn = page.locator('button:has-text("Make Payment")');
+    const paymentBtn = page.getByRole('button', { name: 'Make Payment' });
     await paymentBtn.scrollIntoViewIfNeeded();
     
     await expect(paymentBtn).toBeEnabled({ timeout: 10000 });
@@ -92,7 +88,7 @@ test.describe('S8 - Checkout and payment happy path', () => {
     await expect(page.locator('td:has-text("Not Processed")').first()).toBeVisible({ timeout: 5000 });
     await expect(page.locator('td:has-text("E2E Test Normal User")').first()).toBeVisible({ timeout: 5000 });
 
-    await page.goto(`${baseURL}/cart`);
+    await page.getByRole('link', { name: 'Cart' }).click();
     
     await expect(page.locator('p:has-text("Your Cart Is Empty")')).toBeVisible();
     
@@ -106,15 +102,15 @@ test.describe('S8 - Checkout and payment happy path', () => {
     }
   });
 
-  test('should not allow payment without address', async ({ page }) => {
+  test('should not allow payment if is guest user', async ({ page }) => {
     test.setTimeout(60000);
     
     await page.goto(`${baseURL}/`);
     await page.waitForSelector('.card', { timeout: 10000 });
-    await page.locator('button:has-text("ADD TO CART")').first().click();
+    await page.getByRole('button', { name: 'ADD TO CART' }).first().click();
     await page.waitForTimeout(1000);
     
-    await page.goto(`${baseURL}/cart`);
+    await page.getByRole('link', { name: 'Cart' }).click();
     
     const iframe = page.locator('iframe[name*="braintree"]');
     const iframeVisible = await iframe.isVisible().catch(() => false);
@@ -122,7 +118,7 @@ test.describe('S8 - Checkout and payment happy path', () => {
     if (iframeVisible) {
       await page.waitForSelector('iframe[name*="braintree"]', { timeout: 10000 });
       
-      const paymentBtn = page.locator('button:has-text("Make Payment")');
+      const paymentBtn = page.getByRole('button', { name: 'Make Payment' });
       const isDisabled = await paymentBtn.isDisabled().catch(() => true);
       
       expect(isDisabled).toBeTruthy();
@@ -132,26 +128,25 @@ test.describe('S8 - Checkout and payment happy path', () => {
   test('should show payment loading state', async ({ page }) => {
     await page.goto(`${baseURL}/`);
     await page.waitForSelector('.card', { timeout: 10000 });
-    await page.locator('button:has-text("ADD TO CART")').first().click();
+    await page.getByRole('button', { name: 'ADD TO CART' }).first().click();
     await page.waitForTimeout(1000);
     
-    await page.goto(`${baseURL}/cart`);
+    await page.getByRole('link', { name: 'Cart' }).click();
     
+    await page.waitForResponse('/api/v1/product/braintree/token');
     await page.waitForSelector('iframe[name*="number"]', { timeout: 15000 });
     
-    await page.waitForTimeout(2000);
+    const cardNumberFrame = page.frameLocator('iframe[name="braintree-hosted-field-number"]').first();
+    const expirationFrame = page.frameLocator('iframe[name="braintree-hosted-field-expirationDate"]').first();
+    const cvvFrame = page.frameLocator('iframe[name="braintree-hosted-field-cvv"]').first();
     
-    const cardNumberFrame = page.frameLocator('iframe[name*="number"]').first();
-    const expirationFrame = page.frameLocator('iframe[name*="expiration"]').first();
-    const cvvFrame = page.frameLocator('iframe[name*="cvv"]').first();
-    
-    await cardNumberFrame.locator('#credit-card-number').fill('4111111111111111');
-    await expirationFrame.locator('#expiration').fill('1228');
-    await cvvFrame.locator('#cvv').fill('123');
+    await cardNumberFrame.getByRole('textbox', { name: 'Credit Card Number' }).fill('4111111111111111');
+    await expirationFrame.getByRole('textbox', { name: 'Expiration Date' }).fill('1228');
+    await cvvFrame.getByRole('textbox', { name: 'CVV' }).fill('123');
     
     await page.waitForTimeout(1000);
     
-    const paymentBtn = page.locator('button:has-text("Make Payment")');
+    const paymentBtn = page.getByRole('button', { name: 'Make Payment' });
     await paymentBtn.scrollIntoViewIfNeeded();
     await expect(paymentBtn).toBeEnabled({ timeout: 10000 });
     await paymentBtn.click();
