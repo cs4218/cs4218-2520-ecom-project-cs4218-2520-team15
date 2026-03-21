@@ -3,35 +3,38 @@
  */
 
 import { test, expect } from '@playwright/test';
+import { TEST_USERS } from './fixtures/seedData.js';
 
 test.describe('S11 - Order history and details viewing', () => {
   const baseURL = 'http://localhost:3000';
-  const testUser = {
-    email: 'abc@gmail.com',
-    password: 'abc123'
-  };
+  
+  const testUser = TEST_USERS.find(user => user.role === 0);
+  
+  if (!testUser) {
+    throw new Error('Normal test user not found in seed data');
+  }
 
   test.beforeEach(async ({ page }) => {
     await page.goto(baseURL);
     await page.evaluate(() => localStorage.clear());
     
     await page.goto(`${baseURL}/login`);
-    await page.fill('input[type="email"]', testUser.email);
-    await page.fill('input[type="password"]', testUser.password);
-    await page.click('button:has-text("LOGIN")');
+    await page.getByRole('textbox', { name: 'Enter Your Email' }).fill(testUser.email);
+    await page.getByRole('textbox', { name: 'Enter Your Password' }).fill(testUser.password);
+    await page.getByRole('button', { name: 'LOGIN' }).click();
     await page.waitForURL(baseURL + '/', { timeout: 10000 });
     
+    // Clean up existing orders
     await page.evaluate(async () => {
-      const auth = JSON.parse(localStorage.getItem('auth'));
+      const auth = JSON.parse(localStorage.getItem('auth') || '{}');
       if (auth?.token) {
         try {
-          const response = await fetch('http://localhost:6060/api/v1/auth/orders', {
+          await fetch('http://localhost:6060/api/v1/auth/orders', {
             method: 'DELETE',
             headers: {
               'Authorization': auth.token
             }
           });
-          console.log('Delete orders response:', response.status);
         } catch (error) {
           console.log('Delete orders error:', error);
         }
@@ -45,58 +48,48 @@ test.describe('S11 - Order history and details viewing', () => {
     await page.goto(`${baseURL}/`);
     await page.waitForSelector('.card', { timeout: 10000 });
     
-    const firstProduct = page.locator('.card').first();
-    await firstProduct.locator('button:has-text("ADD TO CART")').click();
+    await page.getByRole('button', { name: 'ADD TO CART' }).first().click();
     await page.waitForTimeout(1000);
     
-    await page.click('.nav-link:has-text("Cart")');
+    await page.getByRole('link', { name: 'Cart' }).click();
     await page.waitForURL(`${baseURL}/cart`);
     await page.waitForSelector('.cart-page', { timeout: 10000 });
     
-    const updateAddressBtn = page.locator('button:has-text("Update Address")');
+    const updateAddressBtn = page.getByRole('button', { name: 'Update Address' });
     const updateBtnVisible = await updateAddressBtn.isVisible().catch(() => false);
     
     if (updateBtnVisible) {
-      await page.locator('a.nav-link.dropdown-toggle:has-text("testing")').click();
+      await page.getByRole('button', { name: testUser.name }).click();
       await page.waitForTimeout(500);
-      await page.locator('a.dropdown-item:has-text("Dashboard")').click();
+      await page.getByRole('link', { name: 'Dashboard' }).click();
       await page.waitForURL(/\/dashboard\/user/, { timeout: 10000 });
       
-      await page.click('a:has-text("Profile")');
+      await page.getByRole('link', { name: 'Profile' }).click();
       await page.waitForURL(/\/dashboard\/user\/profile/);
       
       await page.waitForSelector('input#profile-address', { timeout: 5000 });
-      await page.fill('input#profile-address', '123 Test Street, Singapore');
-      await page.click('button:has-text("UPDATE")');
+      await page.fill('input#profile-address', testUser.address);
+      await page.getByRole('button', { name: 'UPDATE' }).click();
       await page.waitForTimeout(2000);
       
-      await page.click('.nav-link:has-text("Cart")');
+      await page.getByRole('link', { name: 'Cart' }).click();
       await page.waitForURL(`${baseURL}/cart`);
     }
     
-    await page.waitForSelector('.braintree-options-list', { timeout: 15000 });
-    const cardOption = page.locator('.braintree-option__label:has-text("Card")');
-    await cardOption.click();
-    await page.waitForTimeout(2000);
+    await page.waitForResponse('/api/v1/product/braintree/token');
+    await page.waitForSelector('iframe[name*="number"]', { timeout: 15000 });
     
-    const cardNumberFrame = page.frameLocator('iframe[name*="number"]').first();
-    const expirationFrame = page.frameLocator('iframe[name*="expiration"]').first();
-    const cvvFrame = page.frameLocator('iframe[name*="cvv"]').first();
+    const cardNumberFrame = page.frameLocator('iframe[name="braintree-hosted-field-number"]').first();
+    const expirationFrame = page.frameLocator('iframe[name="braintree-hosted-field-expirationDate"]').first();
+    const cvvFrame = page.frameLocator('iframe[name="braintree-hosted-field-cvv"]').first();
     
-    await cardNumberFrame.locator('#credit-card-number').fill('4111111111111111');
-    await expirationFrame.locator('#expiration').fill('1228');
-    await cvvFrame.locator('#cvv').fill('123');
-    
-    try {
-      const postalFrame = page.frameLocator('iframe[name*="postal"]').first();
-      await postalFrame.locator('#postal-code').fill('12345', { timeout: 2000 });
-    } catch (e) {
-      // Postal code not required
-    }
+    await cardNumberFrame.getByRole('textbox', { name: 'Credit Card Number' }).fill('4111111111111111');
+    await expirationFrame.getByRole('textbox', { name: 'Expiration Date' }).fill('1228');
+    await cvvFrame.getByRole('textbox', { name: 'CVV' }).fill('123');
     
     await page.waitForTimeout(1000);
     
-    const paymentBtn = page.locator('button:has-text("Make Payment")');
+    const paymentBtn = page.getByRole('button', { name: 'Make Payment' });
     await paymentBtn.scrollIntoViewIfNeeded();
     await expect(paymentBtn).toBeEnabled({ timeout: 10000 });
     await paymentBtn.click();
@@ -105,26 +98,26 @@ test.describe('S11 - Order history and details viewing', () => {
   }
 
   test('should navigate to orders page via header dropdown', async ({ page }) => {
-    await page.locator('a.nav-link.dropdown-toggle:has-text("testing")').click();
+    await page.getByRole('button', { name: testUser.name }).click();
     await page.waitForTimeout(500);
     
-    await page.locator('a.dropdown-item:has-text("Dashboard")').click();
+    await page.getByRole('link', { name: 'Dashboard' }).click();
     await page.waitForURL(/\/dashboard\/user/, { timeout: 10000 });
     
-    await page.click('a:has-text("Orders")');
+    await page.getByRole('link', { name: 'Orders' }).click();
     await page.waitForURL(`${baseURL}/dashboard/user/orders`);
     
-    await expect(page.locator('h1:has-text("Your Orders")')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Your Orders' })).toBeVisible();
   });
 
   test('should navigate to orders page via UserMenu', async ({ page }) => {
     await page.goto(`${baseURL}/dashboard/user`);
     await page.waitForSelector('.list-group', { timeout: 10000 });
     
-    await page.click('a.list-group-item:has-text("Orders")');
+    await page.getByRole('link', { name: 'Orders' }).click();
     await page.waitForURL(`${baseURL}/dashboard/user/orders`);
     
-    await expect(page.locator('h1:has-text("Your Orders")')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Your Orders' })).toBeVisible();
   });
 
   test('should display order details after creating order', async ({ page }) => {
@@ -140,16 +133,16 @@ test.describe('S11 - Order history and details viewing', () => {
     const orderNumberCell = firstOrder.locator('td').first();
     await expect(orderNumberCell).toHaveText('1');
     
-    await expect(firstOrder.locator('td:has-text("Not Processed")')).toBeVisible();
-    await expect(firstOrder.locator('td:has-text("testing")')).toBeVisible();
-    await expect(firstOrder.locator('td:has-text("Success")')).toBeVisible();
+    await expect(firstOrder.getByRole('cell', { name: 'Not Processed' })).toBeVisible();
+    await expect(firstOrder.getByRole('cell', { name: testUser.name })).toBeVisible();
+    await expect(firstOrder.getByRole('cell', { name: 'Success' })).toBeVisible();
     
     const quantityCell = firstOrder.locator('td').nth(5);
     await expect(quantityCell).toHaveText('1');
     
     const dateCell = firstOrder.locator('td').nth(3);
     const dateText = await dateCell.textContent();
-    expect(dateText).toMatch(/ago|seconds|minutes|hours|just now/);
+    expect(dateText || '').toMatch(/ago|seconds|minutes|hours|just now/);
   });
 
   test('should display product line items with correct details', async ({ page }) => {
@@ -171,61 +164,57 @@ test.describe('S11 - Order history and details viewing', () => {
     const productName = firstProduct.locator('h4');
     await expect(productName).toBeVisible();
     const nameText = await productName.textContent();
-    expect(nameText.length).toBeGreaterThan(0);
+    expect((nameText || '').length).toBeGreaterThan(0);
     
     const productDescription = firstProduct.locator('p').first();
     await expect(productDescription).toBeVisible();
     const descText = await productDescription.textContent();
-    expect(descText.length).toBeLessThanOrEqual(40);
+    expect((descText || '').length).toBeLessThanOrEqual(40);
     
     const productPrice = firstProduct.locator('p:has-text("Price:")');
     await expect(productPrice).toBeVisible();
-    expect(await productPrice.textContent()).toMatch(/Price: \$/);
+    const priceText = await productPrice.textContent();
+    expect(priceText || '').toMatch(/Price: \$/);
   });
 
   test('should display multiple orders in correct chronological order', async ({ page }) => {
     await createTestOrder(page);
+    await page.waitForTimeout(2000);
+    
+    await page.evaluate(() => localStorage.setItem('cart', '[]'));
     
     await page.goto(`${baseURL}/`);
     await page.waitForSelector('.card', { timeout: 10000 });
     
-    const secondProduct = page.locator('.card').nth(1);
-    await secondProduct.locator('button:has-text("ADD TO CART")').click();
+    await page.getByRole('button', { name: 'ADD TO CART' }).nth(1).click();
     await page.waitForTimeout(1000);
     
-    await page.click('.nav-link:has-text("Cart")');
+    await page.getByRole('link', { name: 'Cart' }).click();
     await page.waitForURL(`${baseURL}/cart`);
     
-    await page.waitForSelector('.braintree-options-list', { timeout: 15000 });
-    const cardOption = page.locator('.braintree-option__label:has-text("Card")');
-    await cardOption.click();
-    await page.waitForTimeout(2000);
+    await expect(page.locator('p:has-text("You Have 1 items in your cart")')).toBeVisible();
     
-    const cardNumberFrame = page.frameLocator('iframe[name*="number"]').first();
-    const expirationFrame = page.frameLocator('iframe[name*="expiration"]').first();
-    const cvvFrame = page.frameLocator('iframe[name*="cvv"]').first();
+    await page.waitForResponse('/api/v1/product/braintree/token');
+    await page.waitForSelector('iframe[name*="number"]', { timeout: 15000 });
     
-    await cardNumberFrame.locator('#credit-card-number').fill('4111111111111111');
-    await expirationFrame.locator('#expiration').fill('1228');
-    await cvvFrame.locator('#cvv').fill('123');
+    const cardNumberFrame = page.frameLocator('iframe[name="braintree-hosted-field-number"]').first();
+    const expirationFrame = page.frameLocator('iframe[name="braintree-hosted-field-expirationDate"]').first();
+    const cvvFrame = page.frameLocator('iframe[name="braintree-hosted-field-cvv"]').first();
     
-    try {
-      const postalFrame = page.frameLocator('iframe[name*="postal"]').first();
-      await postalFrame.locator('#postal-code').fill('12345', { timeout: 2000 });
-    } catch (e) {
-      // Postal code not required
-    }
+    await cardNumberFrame.getByRole('textbox', { name: 'Credit Card Number' }).fill('4111111111111111');
+    await expirationFrame.getByRole('textbox', { name: 'Expiration Date' }).fill('1228');
+    await cvvFrame.getByRole('textbox', { name: 'CVV' }).fill('123');
     
     await page.waitForTimeout(1000);
     
-    const paymentBtn = page.locator('button:has-text("Make Payment")');
+    const paymentBtn = page.getByRole('button', { name: 'Make Payment' });
     await paymentBtn.scrollIntoViewIfNeeded();
     await expect(paymentBtn).toBeEnabled({ timeout: 10000 });
     await paymentBtn.click();
     
     await page.waitForURL(/\/dashboard\/user\/orders/, { timeout: 20000 });
-    
     await page.waitForSelector('.border.shadow', { timeout: 10000 });
+    await page.waitForTimeout(2000);
     
     const orderPanels = page.locator('.border.shadow');
     await expect(orderPanels).toHaveCount(2);
@@ -233,78 +222,68 @@ test.describe('S11 - Order history and details viewing', () => {
     const firstOrderNum = await orderPanels.first().locator('td').first().textContent();
     const secondOrderNum = await orderPanels.nth(1).locator('td').first().textContent();
     
-    expect(firstOrderNum).toBe('1');
-    expect(secondOrderNum).toBe('2');
+    expect(firstOrderNum || '').toBe('1'); 
+    expect(secondOrderNum || '').toBe('2');
   });
 
   test('should display order with multiple product line items', async ({ page }) => {
     await page.goto(`${baseURL}/`);
     await page.waitForSelector('.card', { timeout: 10000 });
     
-    await page.locator('button:has-text("ADD TO CART")').first().click();
+    await page.getByRole('button', { name: 'ADD TO CART' }).first().click();
     await page.waitForTimeout(1000);
     
-    await page.locator('button:has-text("ADD TO CART")').nth(1).click();
+    await page.getByRole('button', { name: 'ADD TO CART' }).nth(1).click();
     await page.waitForTimeout(1000);
     
     await expect(page.locator('.ant-badge-count')).toHaveText('2');
     
-    await page.click('.nav-link:has-text("Cart")');
+    await page.getByRole('link', { name: 'Cart' }).click();
     await page.waitForURL(`${baseURL}/cart`);
     await page.waitForSelector('.cart-page', { timeout: 10000 });
     
     await expect(page.locator('p:has-text("You Have 2 items in your cart")')).toBeVisible();
     
-    const updateAddressBtn = page.locator('button:has-text("Update Address")');
+    const updateAddressBtn = page.getByRole('button', { name: 'Update Address' });
     const updateBtnVisible = await updateAddressBtn.isVisible().catch(() => false);
     
     if (updateBtnVisible) {
-      await page.locator('a.nav-link.dropdown-toggle:has-text("testing")').click();
+      await page.getByRole('button', { name: testUser.name }).click();
       await page.waitForTimeout(500);
-      await page.locator('a.dropdown-item:has-text("Dashboard")').click();
+      await page.getByRole('link', { name: 'Dashboard' }).click();
       await page.waitForURL(/\/dashboard\/user/, { timeout: 10000 });
       
-      await page.click('a:has-text("Profile")');
+      await page.getByRole('link', { name: 'Profile' }).click();
       await page.waitForURL(/\/dashboard\/user\/profile/);
       
       await page.waitForSelector('input#profile-address', { timeout: 5000 });
-      await page.fill('input#profile-address', '123 Test Street, Singapore');
-      await page.click('button:has-text("UPDATE")');
+      await page.fill('input#profile-address', testUser.address);
+      await page.getByRole('button', { name: 'UPDATE' }).click();
       await page.waitForTimeout(2000);
       
-      await page.click('.nav-link:has-text("Cart")');
+      await page.getByRole('link', { name: 'Cart' }).click();
       await page.waitForURL(`${baseURL}/cart`);
     }
     
-    await page.waitForSelector('.braintree-options-list', { timeout: 15000 });
-    const cardOption = page.locator('.braintree-option__label:has-text("Card")');
-    await cardOption.click();
-    await page.waitForTimeout(2000);
+    await page.waitForResponse('/api/v1/product/braintree/token');
+    await page.waitForSelector('iframe[name*="number"]', { timeout: 15000 });
     
-    const cardNumberFrame = page.frameLocator('iframe[name*="number"]').first();
-    const expirationFrame = page.frameLocator('iframe[name*="expiration"]').first();
-    const cvvFrame = page.frameLocator('iframe[name*="cvv"]').first();
+    const cardNumberFrame = page.frameLocator('iframe[name="braintree-hosted-field-number"]').first();
+    const expirationFrame = page.frameLocator('iframe[name="braintree-hosted-field-expirationDate"]').first();
+    const cvvFrame = page.frameLocator('iframe[name="braintree-hosted-field-cvv"]').first();
     
-    await cardNumberFrame.locator('#credit-card-number').fill('4111111111111111');
-    await expirationFrame.locator('#expiration').fill('1228');
-    await cvvFrame.locator('#cvv').fill('123');
-    
-    try {
-      const postalFrame = page.frameLocator('iframe[name*="postal"]').first();
-      await postalFrame.locator('#postal-code').fill('12345', { timeout: 2000 });
-    } catch (e) {
-      // Postal code not required
-    }
+    await cardNumberFrame.getByRole('textbox', { name: 'Credit Card Number' }).fill('4111111111111111');
+    await expirationFrame.getByRole('textbox', { name: 'Expiration Date' }).fill('1228');
+    await cvvFrame.getByRole('textbox', { name: 'CVV' }).fill('123');
     
     await page.waitForTimeout(1000);
     
-    const paymentBtn = page.locator('button:has-text("Make Payment")');
+    const paymentBtn = page.getByRole('button', { name: 'Make Payment' });
     await paymentBtn.scrollIntoViewIfNeeded();
     await expect(paymentBtn).toBeEnabled({ timeout: 10000 });
     await paymentBtn.click();
     
     await page.waitForURL(/\/dashboard\/user\/orders/, { timeout: 20000 });
-    
     await page.waitForSelector('.border.shadow', { timeout: 10000 });
     
     const firstOrder = page.locator('.border.shadow').first();
@@ -330,7 +309,7 @@ test.describe('S11 - Order history and details viewing', () => {
     const orderPanels = page.locator('.border.shadow');
     const count = await orderPanels.count();
     
-    await expect(page.locator('h1:has-text("Your Orders")')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Your Orders' })).toBeVisible();
     expect(count).toBe(0);
   });
 

@@ -112,7 +112,7 @@ const CartPage = () => {
                   </div>
                   <div className="col-md-4">
                     <p>{p.name}</p>
-                    <p>{p.description.substring(0, 30)}</p>
+                    <p>{p.description?.substring(0, 30) || 'No description'}</p>
                     <p>Price : {p.price}</p>
                   </div>
                   <div className="col-md-4 cart-remove-btn">
@@ -175,9 +175,11 @@ const CartPage = () => {
                     <DropIn
                       options={{
                         authorization: clientToken,
-                        paypal: {
-                          flow: "vault",
-                        },
+                        card: {
+                          cardholderName: {
+                            required: false
+                          }
+                        }
                       }}
                       onInstance={(instance) => setInstance(instance)}
                     />
