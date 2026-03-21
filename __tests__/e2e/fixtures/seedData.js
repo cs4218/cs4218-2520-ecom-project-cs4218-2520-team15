@@ -95,6 +95,6 @@ export const TEST_ORDERS = [
     productSlugs: ["nus-tshirt"], // resolved to _id in controller
     buyerEmail: "e2etest_normal_user@example.com", // resolved to _id in controller
     payment: { success: false, transactionId: "txn_002" },
-    status: "Cancelled",
+    status: "Not Processed",
   }
 ];
