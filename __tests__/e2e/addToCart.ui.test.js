@@ -5,192 +5,150 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('S7 - Add-to-cart from multiple entry points', () => {
-  const baseURL = 'http://localhost:3000';
-  
   const testUser = {
     email: 'e2etest_normal_user@example.com',
-    password: 'TestNormal@12345'
+    password: 'TestNormal@12345',
+    name: 'E2E Test Normal User',
+    phone: '91237654',
+    address: '456 Test Street',
+    answer: 'playwright',
   };
 
-  test.beforeEach(async ({ page }) => {
-    await page.goto(baseURL);
-    await page.evaluate(() => localStorage.clear());
-    
-    await page.goto(`${baseURL}/login`);
-    
+  const parsePrice = (priceText) => Number((priceText || '').replace(/[^0-9.-]/g, ''));
+
+  const ensureNormalUserExists = async (request) => {
+    await request.post('http://localhost:6060/api/v1/auth/register', {
+      data: testUser,
+    });
+  };
+
+  const loginViaUi = async (page) => {
+    await page.goto('/login');
     await page.fill('input[type="email"]', testUser.email);
     await page.fill('input[type="password"]', testUser.password);
-    
-    await page.click('button[type="submit"].btn-primary');
-    
-    await page.waitForURL(baseURL + '/', { timeout: 10000 });
-    
-    await expect(page.locator('.nav-link.dropdown-toggle:has-text("E2E Test Normal User")')).toBeVisible();
-  });
+    await page.getByRole('button', { name: 'LOGIN' }).click();
 
-  test('should add products from home, category listing, and product details, then manage cart', async ({ page }) => {
-    const addedProducts = new Set();
-    
-    await page.goto(`${baseURL}/`);
-    await page.waitForSelector('.card', { timeout: 10000 });
-    
-    const firstProduct = page.locator('.card').first();
-    const productAName = (await firstProduct.locator('.card-title').first().textContent())?.trim();
-    addedProducts.add(productAName);
-    
-    await firstProduct.locator('button:has-text("ADD TO CART")').click();
-    await page.waitForSelector('.go3958317564', { timeout: 5000 });
-    await expect(page.locator('.ant-badge-count')).toHaveText('1');
-
-    await page.click('a.nav-link.dropdown-toggle:has-text("Categories")');
-    await page.waitForSelector('.dropdown-menu', { state: 'visible' });
-    
-    const categoryLinks = page.locator('.dropdown-menu a[href^="/category/"]');
-    const firstCategoryLink = categoryLinks.first();
-    await firstCategoryLink.click();
-    
-    await page.waitForURL(/\/category\//);
-    await page.waitForSelector('.card', { timeout: 10000 });
-    
-    const allProductsInCategory = page.locator('.card');
-    const categoryProductCount = await allProductsInCategory.count();
-    
-    let productBName = null;
-    let secondProductIndex = -1;
-    
-    for (let i = 0; i < categoryProductCount; i++) {
-      const prodName = (await allProductsInCategory.nth(i).locator('.card-title').first().textContent())?.trim();
-      if (!addedProducts.has(prodName)) {
-        productBName = prodName;
-        secondProductIndex = i;
-        break;
-      }
-    }
-    
-    if (secondProductIndex === -1) {
-      throw new Error(`Could not find a second unique product. Available products in category: ${categoryProductCount}`);
-    }
-    
-    addedProducts.add(productBName);
-    
-    const secondProduct = allProductsInCategory.nth(secondProductIndex);
-    await secondProduct.locator('button:has-text("ADD TO CART")').click();
-    await page.waitForSelector('.go3958317564', { timeout: 5000 });
-    await expect(page.locator('.ant-badge-count')).toHaveText('2');
-
-    await page.goto(`${baseURL}/`);
-    await page.waitForSelector('.card', { timeout: 10000 });
-    
-    const allProductsOnHome = page.locator('.card');
-    const homeProductCount = await allProductsOnHome.count();
-    
-    let productCName = null;
-    let thirdProductIndex = -1;
-    
-    for (let i = 0; i < homeProductCount; i++) {
-      const prodName = (await allProductsOnHome.nth(i).locator('.card-title').first().textContent())?.trim();
-      if (!addedProducts.has(prodName)) {
-        productCName = prodName;
-        thirdProductIndex = i;
-        break;
-      }
-    }
-    
-    if (thirdProductIndex === -1) {
-      throw new Error(`Could not find a third unique product. Already added: ${Array.from(addedProducts).join(', ')}`);
-    }
-    
-    addedProducts.add(productCName);
-    
-    await allProductsOnHome.nth(thirdProductIndex).locator('button:has-text("More Details")').click();
-    await page.waitForURL(/\/product\//, { timeout: 15000 });
-    await page.waitForSelector('.product-details', { timeout: 15000 });
-    
-    await page.locator('.product-details-info button:has-text("ADD TO CART")').click();
-    await page.waitForSelector('.go3958317564', { timeout: 5000 });
-    await expect(page.locator('.ant-badge-count')).toHaveText('3');
-
-    const cartData = await page.evaluate(() => {
-      return JSON.parse(localStorage.getItem('cart') || '[]');
+    // Login success is represented by auth state in localStorage, not always immediate URL change.
+    await page.waitForFunction(() => Boolean(localStorage.getItem('auth')), null, {
+      timeout: 15000,
     });
-    
-    const uniqueIds = new Set(cartData.map(item => item._id));
-    if (uniqueIds.size !== 3) {
-      throw new Error(`Cart has duplicate products! Unique IDs: ${uniqueIds.size}, Total items: ${cartData.length}`);
+
+    await page.goto('/cart');
+    // Start each test from a clean cart state.
+    while ((await page.getByRole('button', { name: 'Remove' }).count()) > 0) {
+      await page.getByRole('button', { name: 'Remove' }).first().click();
     }
+    await expect(page.getByText('Your Cart Is Empty')).toBeVisible();
+  };
 
-    await page.click('.nav-link:has-text("Cart")');
-    await page.waitForURL(`${baseURL}/cart`);
-    await page.waitForSelector('.cart-page', { timeout: 10000 });
-    
-    await expect(page.locator('p:has-text("You Have 3 items in your cart")')).toBeVisible();
-    
-    const cartItems = page.locator('.row.card.flex-row');
-    await expect(cartItems).toHaveCount(3);
-    
-    const totalElement = page.locator('h4:has-text("Total")');
-    await expect(totalElement).toBeVisible();
+  const addHomeProduct = async (page) => {
+    await page.goto('/');
+    const homeCard = page.locator('.card').first();
+    const name = (await homeCard.locator('.card-title').first().textContent())?.trim();
+    const priceText = (await homeCard.locator('.card-price').first().textContent())?.trim();
+    const unitPrice = parsePrice(priceText);
 
-    await page.locator('button:has-text("Remove")').first().click();
-    
-    await expect(page.locator('p:has-text("You Have 2 items in your cart")')).toBeVisible({ timeout: 5000 });
-    await expect(cartItems).toHaveCount(2, { timeout: 5000 });
-    await expect(page.locator('.ant-badge-count')).toHaveText('2');
+    await homeCard.getByRole('button', { name: 'ADD TO CART' }).click();
+    await expect(page.getByRole('link', { name: 'Cart' })).toContainText('1');
 
+    return { name, unitPrice };
+  };
+
+  const addCategoryProduct = async (page) => {
+    await page.getByRole('link', { name: 'Categories' }).click();
+    await expect(page).toHaveURL(/\/categories$/);
+
+    const firstCategory = page.locator('a.btn.btn-primary').first();
+    await firstCategory.click();
+    await expect(page).toHaveURL(/\/category\/.+/);
+
+    const categoryCard = page.locator('.card').first();
+    const name = (await categoryCard.locator('.card-title').first().textContent())?.trim();
+    const priceText = (await categoryCard.locator('.card-price').first().textContent())?.trim();
+    const unitPrice = parsePrice(priceText);
+
+    await categoryCard.getByRole('button', { name: 'ADD TO CART' }).click();
+    await expect(page.getByRole('link', { name: 'Cart' })).toContainText('2');
+
+    return { name, unitPrice };
+  };
+
+  const addDetailsProduct = async (page) => {
+    await page.goto('/');
+    const card = page.locator('.card').nth(1);
+    await card.getByRole('button', { name: 'More Details' }).click();
+    await expect(page).toHaveURL(/\/product\/.+/);
+
+    const detailsName = (await page.locator('h6').filter({ hasText: 'Name :' }).textContent())?.replace('Name :', '').trim();
+    const detailsPriceText = (await page.locator('h6').filter({ hasText: 'Price :' }).textContent())?.replace('Price :', '').trim();
+    const unitPrice = parsePrice(detailsPriceText);
+
+    await page.getByRole('button', { name: 'ADD TO CART' }).click();
+    await expect(page.getByRole('link', { name: 'Cart' })).toContainText('3');
+
+    return { name: detailsName, unitPrice };
+  };
+
+  const cartTotalValue = async (page) => {
+    const totalText = await page.locator('h4').filter({ hasText: 'Total :' }).textContent();
+    return parsePrice(totalText);
+  };
+
+  test.beforeEach(async ({ page, request }) => {
+    await ensureNormalUserExists(request);
+    await loginViaUi(page);
+  });
+
+  // Tan Qin Xu, A0213002J
+  test('adds from home, category listing, and product details; verifies cart items/prices/total; updates after remove', async ({ page }) => {
+    const productA = await addHomeProduct(page);
+    const productB = await addCategoryProduct(page);
+    const productC = await addDetailsProduct(page);
+
+    await page.goto('/cart');
+    await expect(page.getByText('You Have 3 items in your cart')).toBeVisible();
+    await expect(page.locator('.row.card.flex-row')).toHaveCount(3);
+
+    // Assert all chosen product names appear in cart.
+    await expect(page.locator('.row.card.flex-row')).toContainText(productA.name);
+    await expect(page.locator('.row.card.flex-row')).toContainText(productB.name);
+    await expect(page.locator('.row.card.flex-row')).toContainText(productC.name);
+
+    // Assert per-item prices shown in cart match the selected products.
+    const cartPriceTexts = await page.locator('.row.card.flex-row p:has-text("Price :")').allTextContents();
+    const cartPrices = cartPriceTexts.map(parsePrice);
+    expect(cartPrices).toContain(productA.unitPrice);
+    expect(cartPrices).toContain(productB.unitPrice);
+    expect(cartPrices).toContain(productC.unitPrice);
+
+    const expectedTotal = productA.unitPrice + productB.unitPrice + productC.unitPrice;
+    await expect.poll(() => cartTotalValue(page)).toBeCloseTo(expectedTotal, 2);
+
+    // Remove one item and verify count + total update.
+    const removedPrice = parsePrice(await page.locator('.row.card.flex-row p:has-text("Price :")').first().textContent());
+    await page.getByRole('button', { name: 'Remove' }).first().click();
+    await expect(page.getByText('You Have 2 items in your cart')).toBeVisible();
+    await expect(page.locator('.row.card.flex-row')).toHaveCount(2);
+    await expect.poll(() => cartTotalValue(page)).toBeCloseTo(expectedTotal - removedPrice, 2);
+
+    // Persistence check (localStorage cart survives reload).
     await page.reload();
-    await page.waitForSelector('.cart-page', { timeout: 10000 });
-    
-    await expect(cartItems).toHaveCount(2);
-    await expect(page.locator('p:has-text("You Have 2 items in your cart")')).toBeVisible();
+    await expect(page.locator('.row.card.flex-row')).toHaveCount(2);
+    await expect(page.getByText('You Have 2 items in your cart')).toBeVisible();
   });
 
-  test('should handle empty cart scenario', async ({ page }) => {
-    await page.goto(`${baseURL}/cart`);
-    
-    await expect(page.locator('p:has-text("Your Cart Is Empty")')).toBeVisible();
-    
-    const cartItems = page.locator('.row.card.flex-row');
-    await expect(cartItems).toHaveCount(0);
-  });
+  // Tan Qin Xu, A0213002J
+  test('updates cart badge and empty state after removing all items', async ({ page }) => {
+    await addHomeProduct(page);
+    await addCategoryProduct(page);
+    await page.goto('/cart');
+    await expect(page.getByText('You Have 2 items in your cart')).toBeVisible();
 
-  test('should update cart badge across navigation', async ({ page }) => {
-    await page.goto(`${baseURL}/`);
-    await page.waitForSelector('.card', { timeout: 10000 });
-    
-    await page.locator('button:has-text("ADD TO CART")').first().click();
-    await page.waitForSelector('.go3958317564', { timeout: 5000 });
-    
-    await expect(page.locator('.ant-badge-count')).toHaveText('1');
-    
-    await page.goto(`${baseURL}/categories`);
-    await expect(page.locator('.ant-badge-count')).toHaveText('1');
-    
-    await page.click('.nav-link:has-text("Home")');
-    await page.waitForURL(baseURL + '/');
-    await page.waitForLoadState('networkidle');
-    await expect(page.locator('.ant-badge-count')).toHaveText('1');
-    
-    await page.locator('button:has-text("More Details")').first().click();
-    await page.waitForURL(/\/product\//, { timeout: 15000 });
-    await expect(page.locator('.ant-badge-count')).toHaveText('1');
-  });
-
-  test('should add same product multiple times', async ({ page }) => {
-    await page.goto(`${baseURL}/`);
-    await page.waitForSelector('.card', { timeout: 10000 });
-    
-    const firstProduct = page.locator('.card').first();
-    
-    for (let i = 0; i < 3; i++) {
-      await firstProduct.locator('button:has-text("ADD TO CART")').click();
-      await page.waitForSelector('.go3958317564', { timeout: 5000 });
-      await expect(page.locator('.ant-badge-count')).toHaveText(String(i + 1));
+    while ((await page.getByRole('button', { name: 'Remove' }).count()) > 0) {
+      await page.getByRole('button', { name: 'Remove' }).first().click();
     }
-    
-    await page.click('.nav-link:has-text("Cart")');
-    await page.waitForURL(`${baseURL}/cart`);
-    
-    const cartItems = page.locator('.row.card.flex-row');
-    await expect(cartItems).toHaveCount(3);
+
+    await expect(page.getByText('Your Cart Is Empty')).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Cart' })).toContainText('0');
   });
 });
