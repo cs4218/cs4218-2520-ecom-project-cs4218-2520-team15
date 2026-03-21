@@ -2,17 +2,38 @@ import express from "express";
 import colors from "colors";
 import dotenv from "dotenv";
 import morgan from "morgan";
+import { MongoMemoryServer } from "mongodb-memory-server";
+import mongoose from "mongoose";
 import connectDB from "./config/db.js";
-import authRoutes from './routes/authRoute.js'
-import categoryRoutes from './routes/categoryRoutes.js'
-import productRoutes from './routes/productRoutes.js'
+import authRoutes from './routes/authRoute.js';
+import categoryRoutes from './routes/categoryRoutes.js';
+import productRoutes from './routes/productRoutes.js';
+import testRoutes from './routes/testRoutes.js';
 import cors from "cors";
 
 // configure env
 dotenv.config();
 
 //database config
-connectDB();
+// only connect when not running tests; tests use an in-memory MongoDB and manage connection
+if (process.env.NODE_ENV !== 'test') {
+    if (process.env.NODE_ENV == 'ui-test') {
+        MongoMemoryServer.create().then(async (mongoServer) => {
+            process.env.MONGO_URL = mongoServer.getUri();
+            connectDB();
+
+            const cleanup = async () => {
+                await mongoose.disconnect();
+                await mongoServer.stop();
+                process.exit(0);
+            };
+            process.on('SIGTERM', cleanup);
+            process.on('SIGINT', cleanup);
+        });
+    } else {
+        connectDB();
+    }
+}
 
 const app = express();
 
@@ -26,6 +47,10 @@ app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/category", categoryRoutes);
 app.use("/api/v1/product", productRoutes);
 
+if (process.env.NODE_ENV == 'ui-test') {
+    app.use("/api/v1/test", testRoutes);
+}
+
 // rest api
 
 app.get('/', (req,res) => {
@@ -34,6 +59,11 @@ app.get('/', (req,res) => {
 
 const PORT = process.env.PORT || 6060;
 
-app.listen(PORT, () => {
-    console.log(`Server running on ${process.env.DEV_MODE} mode on ${PORT}`.bgCyan.white);
-});
+// don't auto-listen when running tests (supertest will import the app)
+if (process.env.NODE_ENV !== 'test') {
+    app.listen(PORT, () => {
+        console.log(`Server running on ${process.env.DEV_MODE} mode on ${PORT}`.bgCyan.white);
+    });
+}
+
+export default app;
