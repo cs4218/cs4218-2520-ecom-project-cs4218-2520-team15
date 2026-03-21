@@ -9,6 +9,10 @@ test.describe('S7 - Add-to-cart from multiple entry points', () => {
   const baseURL = 'http://localhost:3000';
   
   const testUser = TEST_USERS.find(user => user.role === 0);
+  
+  if (!testUser) {
+    throw new Error('Normal test user not found in seed data');
+  }
 
   test.beforeEach(async ({ page }) => {
     await page.goto(`${baseURL}/login`);
