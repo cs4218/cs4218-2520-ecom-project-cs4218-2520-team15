@@ -17,6 +17,7 @@ test.describe("Admin Update Category", () => {
       await categoryInput.click();
       await categoryInput.fill(placeholder);
       await page.getByRole("button", { name: "Submit" }).click();
+      await page.waitForResponse("/api/v1/category/create-category");
     });
   };
 
@@ -37,7 +38,7 @@ test.describe("Admin Update Category", () => {
       .getByRole("dialog")
       .getByRole("button", { name: "Submit" })
       .click();
-
+    await page.waitForResponse(/\/api\/v1\/category\/update-category\/.*/);
     await expect(
       page
         .locator("div")
@@ -54,9 +55,7 @@ test.describe("Admin Update Category", () => {
       .locator("tr", { has: page.locator("td", { hasText: category }) })
       .locator("button", { hasText: /^Delete$/ })
       .click();
-    await expect(
-      page.locator("div").filter({ hasText: "Category is deleted" }).nth(4),
-    ).toBeVisible();
+    await page.waitForResponse(/\/api\/v1\/category\/delete-category\/.*/);
   };
 
   test.beforeEach(async ({ page }) => {
@@ -75,6 +74,7 @@ test.describe("Admin Update Category", () => {
       await passwordInput.click();
       await passwordInput.fill(ADMIN.password);
       await page.getByRole("button", { name: "LOGIN" }).click();
+      await page.waitForResponse("/api/v1/auth/login");
     });
 
     await test.step("navigate to admin dashboard → create category tab", async () => {
@@ -85,7 +85,7 @@ test.describe("Admin Update Category", () => {
   });
 
   test.describe(async () => {
-    const category = "Category A";
+    const category = `Category ${new Date().getTime()}`;
 
     test.beforeEach(async ({ page }) => {
       /* Check that the pre-update state is correct since
@@ -112,7 +112,7 @@ test.describe("Admin Update Category", () => {
   });
 
   test.describe(async () => {
-    const category = "Category B";
+    const category = `Category ${new Date().getTime()}`;
 
     test.beforeEach(async ({ page }) => {
       /* Check that the pre-update state is correct since
@@ -122,6 +122,7 @@ test.describe("Admin Update Category", () => {
       await setup(page, category);
       await expect(page.getByRole("cell", { name: placeholder })).toBeVisible();
       await page.getByRole("link", { name: "Create Product" }).click();
+      await page.waitForResponse("/api/v1/category/get-category");
       await page
         .locator("div")
         .filter({ hasText: /^Select a category$/ })
@@ -145,6 +146,7 @@ test.describe("Admin Update Category", () => {
     }) => {
       await act(page, category);
       await page.getByRole("link", { name: "Create Product" }).click();
+      await page.waitForResponse("/api/v1/category/get-category");
       await page
         .locator("div")
         .filter({ hasText: /^Select a category$/ })
@@ -161,7 +163,7 @@ test.describe("Admin Update Category", () => {
   });
 
   test.describe(async () => {
-    const category = "Category C";
+    const category = `Category ${new Date().getTime()}`;
 
     test.beforeEach(async ({ page }) => {
       /* Check that the pre-update state is correct since
@@ -190,6 +192,7 @@ test.describe("Admin Update Category", () => {
       await act(page, category);
       await page.getByRole("link", { name: "Categories" }).click();
       await page.getByRole("link", { name: "ALL CATEGORIES" }).click();
+      await page.waitForResponse("/api/v1/category/get-category");
 
       const categoryButton = page.getByRole("link", { name: category });
       await expect(categoryButton).toBeVisible();
@@ -201,7 +204,7 @@ test.describe("Admin Update Category", () => {
   });
 
   test.describe(async () => {
-    const category = "Category D";
+    const category = `Category ${new Date().getTime()}`;
 
     test.beforeEach(async ({ page }) => {
       /* Check that the pre-update state is correct since
@@ -209,6 +212,7 @@ test.describe("Admin Update Category", () => {
        */
       await setup(page, category);
       await page.getByRole("link", { name: "Home" }).click();
+      await page.waitForResponse("/api/v1/category/get-category");
       await page.getByRole("link", { name: "Categories" }).click();
       const categoryButton = page.getByRole("link", {
         name: `Placeholder ${category}`,
@@ -229,6 +233,7 @@ test.describe("Admin Update Category", () => {
     }) => {
       await act(page, category);
       await page.getByRole("link", { name: "Home" }).click();
+      await page.waitForResponse("/api/v1/category/get-category");
       await page.getByRole("link", { name: "Categories" }).click();
 
       const categoryButton = page.getByRole("link", { name: category });
@@ -241,7 +246,7 @@ test.describe("Admin Update Category", () => {
   });
 
   test.describe(async () => {
-    const category = "Category E";
+    const category = `Category ${new Date().getTime()}`;
 
     test.beforeEach(async ({ page }) => {
       /* Check that the pre-update state is correct since
@@ -249,6 +254,7 @@ test.describe("Admin Update Category", () => {
        */
       await setup(page, category);
       await page.getByRole("link", { name: "Home" }).click();
+      await page.waitForResponse("/api/v1/category/get-category");
       const categoryFilter = page.getByRole("checkbox", {
         name: `Placeholder ${category}`,
       });
@@ -268,6 +274,7 @@ test.describe("Admin Update Category", () => {
     }) => {
       await act(page, category);
       await page.getByRole("link", { name: "Home" }).click();
+      await page.waitForResponse("/api/v1/category/get-category");
 
       const categoryFilter = page.getByRole("checkbox", { name: category });
       await expect(categoryFilter).toBeVisible();
