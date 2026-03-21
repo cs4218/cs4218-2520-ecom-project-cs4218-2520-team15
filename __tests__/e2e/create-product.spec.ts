@@ -96,7 +96,7 @@ test.describe("Admin Create Product", () => {
     });
   });
 
-  test("should not be able to create new product if photo exceed size limt", async ({
+  test("should not be able to create new product if photo exceed size limit", async ({
     page,
   }) => {
     const product = `Product ${new Date().getTime()}`;
