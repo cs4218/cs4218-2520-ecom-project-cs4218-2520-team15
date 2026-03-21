@@ -1,26 +1,27 @@
+/* Name: Tan Qin Xu
+ * Student No: A0213002J
+ */
+
 jest.resetModules();
 jest.setTimeout(30000);
 
-jest.mock("../../middlewares/authMiddleware.js", () => ({
-  requireSignIn: (req, res, next) => {
-    req.user = { _id: "507f1f77bcf86cd799439011" };
-    next();
-  },
-  isAdmin: (req, res, next) => next(),
-}));
+import dotenv from "dotenv";
+dotenv.config();
 
 import request from "supertest";
-import express from "express";
 import mongoose from "mongoose";
 import { MongoMemoryServer } from "mongodb-memory-server";
+import JWT from "jsonwebtoken";
 
-import categoryRoutes from "../../routes/categoryRoutes.js";
+import app from "../../server.js";
 
 import categoryModel from "../../models/categoryModel.js";
+import userModel from "../../models/userModel.js";
 
 describe("Integration Test: Category Controller + DB", () => {
   let mongoServer;
-  let app;
+  let testUser;
+  let authToken;
 
   beforeAll(async () => {
     mongoServer = await MongoMemoryServer.create();
@@ -32,10 +33,6 @@ describe("Integration Test: Category Controller + DB", () => {
     });
 
     await mongoose.connection.asPromise();
-    
-    app = express();
-    app.use(express.json());
-    app.use("/api/v1/category", categoryRoutes);
   });
 
   afterAll(async () => {
@@ -45,6 +42,24 @@ describe("Integration Test: Category Controller + DB", () => {
 
   beforeEach(async () => {
     await categoryModel.deleteMany({});
+    await userModel.deleteMany({});
+
+    // Create admin user for authenticated requests
+    testUser = await userModel.create({
+      name: "Test Admin",
+      email: "admin@test.com",
+      password: "hashedpassword123",
+      phone: "1234567890",
+      address: "123 Admin Street",
+      answer: "testanswer",
+      role: 1, // Admin role
+    });
+
+    authToken = JWT.sign(
+      { _id: testUser._id },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
   });
 
   test("should return empty array when no categories exist", async () => {
@@ -164,6 +179,7 @@ describe("Integration Test: Category Controller + DB", () => {
 
     await request(app)
       .post("/api/v1/category/create-category")
+      .set("Authorization", authToken)
       .send({ name: "Books" });
 
     res = await request(app)
@@ -177,9 +193,10 @@ describe("Integration Test: Category Controller + DB", () => {
     expect(categoryNames).toContain("Books");
   });
 
-test("should retrieve category by slug after creation", async () => {
+  test("should retrieve category by slug after creation", async () => {
     const createRes = await request(app)
       .post("/api/v1/category/create-category")
+      .set("Authorization", authToken)
       .send({ name: "Home & Garden" });
   
     expect(createRes.status).toBe(201);
