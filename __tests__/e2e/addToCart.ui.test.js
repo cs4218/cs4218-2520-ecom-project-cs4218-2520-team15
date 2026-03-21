@@ -3,18 +3,12 @@
  */
 
 import { test, expect } from '@playwright/test';
+import { TEST_USERS } from './fixtures/seedData.js';
 
 test.describe('S7 - Add-to-cart from multiple entry points', () => {
   const baseURL = 'http://localhost:3000';
   
-  const testUser = {
-    email: 'e2etest_normal_user@example.com',
-    password: 'TestNormal@12345',
-    name: 'E2E Test Normal User',
-    phone: '91237654',
-    address: '456 Test Street',
-    answer: 'playwright',
-  };
+  const testUser = TEST_USERS.find(user => user.role === 0);
 
   test.beforeEach(async ({ page }) => {
     await page.goto(`${baseURL}/login`);
