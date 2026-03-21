@@ -310,41 +310,31 @@ test.describe("Admin Order Management", () => {
     expect(descText).toBe(laptopDesc.substring(0, 30));
   });
 
-  // New: verify that when an admin updates an order status, the buyer sees
-  // the updated status on their personal Orders page.
   test.describe(() => {
     test.afterEach(async ({ page }) => {
-      // Revert backend state by calling the test teardown + seed endpoints.
-      // Using in-page fetch keeps the request on the same origin the app
-      // is served from. If your test routes are on a different origin,
-      // replace the paths with the absolute URL (e.g. http://localhost:6060/...).
       await page.evaluate(async () => {
         try {
           await fetch('/api/v1/test/teardown', { method: 'POST' });
           await fetch('/api/v1/test/seed', { method: 'POST' });
           localStorage.removeItem('auth');
         } catch (err) {
-          // Log and continue — failing here will produce clearer failures
-          // in the next test when assertions don't find expected seeded state.
-          // eslint-disable-next-line no-console
           console.error('teardown/seed failed in afterEach', err);
         }
       });
 
-      // Reload to ensure the client picks up the freshly seeded data.
       await page.goto('/');
       await page.waitForLoadState('networkidle');
     });
 
     test('buyer should see status change after admin updates order', async ({ page }) => {
-      // As admin (from beforeEach) change the seeded success order to Shipped
+      // admin (from beforeEach) changes the seeded success order to Shipped
       await changeStatus(page, 'Success', 'Shipped');
 
-      // Logout admin
+      // admin logout
       await page.getByRole('button', { name: ADMIN.name }).click();
       await page.getByRole('link', { name: 'Logout' }).click();
 
-      // Login as the buyer
+      // buyer login
       const BUYER = TEST_USERS[1];
       await page.getByRole('link', { name: 'Login' }).click();
       const buyerEmail = page.getByRole('textbox', { name: 'Enter Your Email' });
@@ -355,12 +345,10 @@ test.describe("Admin Order Management", () => {
       await buyerPass.fill(BUYER.password);
       await page.getByRole('button', { name: 'LOGIN' }).click();
 
-      // Navigate to buyer's Dashboard → Orders
       await page.getByRole('button', { name: BUYER.name }).click();
       await page.getByRole('link', { name: 'Dashboard' }).click();
       await page.getByRole('link', { name: 'Orders' }).click();
 
-      // Verify the buyer's order block shows the updated status
       await expect(
         getOrderBlock(page, 'Success').locator('tbody tr td').nth(1)
       ).toHaveText('Shipped');
