@@ -7,12 +7,6 @@ import { hashPassword } from "../helpers/authHelper.js";
 
 import { TEST_CATEGORIES, TEST_ORDERS, TEST_PRODUCTS, TEST_USERS } from "../__tests__/e2e/fixtures/seedData.js";
 
-import fs from "fs";
-import path from "path";
-
-// Use process.cwd() for path resolution - works in both Jest (CommonJS) and Node.js (ES modules)
-const IMAGES_DIR = path.join(process.cwd(), "__tests__/e2e/fixtures/images");
-
 export const seedDatabase = async (req, res) => {
   try {
     // Wipe all test collections
@@ -51,43 +45,17 @@ export const seedDatabase = async (req, res) => {
     
     console.log('✅ Categories created:', Object.keys(categoryMap).length);
 
-    // Create products, resolving categorySlug --> _id and loading images from disk
+    // Create products, resolving categorySlug --> _id
+    const productMap = {};
     for (const product of TEST_PRODUCTS) {
-      const { categorySlug, photoFilename, contentType, ...rest } = product;
-      
-      let photoData = null;
-      
-      // Try to load the image from disk
-      if (photoFilename) {
-        const imagePath = path.join(IMAGES_DIR, photoFilename);
-        try {
-          if (fs.existsSync(imagePath)) {
-            photoData = {
-              data: fs.readFileSync(imagePath),
-              contentType: contentType || "image/jpeg",
-            };
-          } else {
-            // Fallback: Create a minimal dummy buffer if image file doesn't exist
-            console.warn(`⚠️  Image file not found: ${imagePath}. Using placeholder.`);
-            photoData = {
-              data: Buffer.from('fake-image'),
-              contentType: "image/jpeg",
-            };
-          }
-        } catch (err) {
-          console.error(`‼️ Error reading image ${photoFilename}:`, err.message);
-          // Fallback to dummy
-          photoData = {
-            data: Buffer.from('fake-image'),
-            contentType: "image/jpeg",
-          };
-        }
-      }
-
-      await new productModel({
+      const { categorySlug, ...rest } = product;
+      const saved = await new productModel({
         ...rest,
         category: categoryMap[categorySlug],
-        ...(photoData && { photo: photoData }),
+        photo: {
+          data: Buffer.from("fake-image"),
+          contentType: "image/png",
+        },
       }).save();
       productMap[product.slug] = saved._id;
     }

@@ -31,11 +31,12 @@ test.describe('S11 - Order history and details viewing', () => {
     await page.waitForURL(baseURL + '/', { timeout: 10000 });
   });
 
-  async function createTestOrder(page) {
+  async function createTestOrder(page, productIndex = 0, cardNumber = '4111111111111111') {
     await page.goto(`${baseURL}/`);
+    await page.waitForResponse(/\/api\/v1\/product\/product-list\/.*/);
     await page.waitForSelector('.card', { timeout: 10000 });
     
-    await page.getByRole('button', { name: 'ADD TO CART' }).first().click();
+    await page.getByRole('button', { name: 'ADD TO CART' }).nth(productIndex).click();
     await page.waitForTimeout(1000);
     
     await page.getByRole('link', { name: 'Cart' }).click();
@@ -49,7 +50,7 @@ test.describe('S11 - Order history and details viewing', () => {
     const expirationFrame = page.frameLocator('iframe[name="braintree-hosted-field-expirationDate"]').first();
     const cvvFrame = page.frameLocator('iframe[name="braintree-hosted-field-cvv"]').first();
     
-    await cardNumberFrame.getByRole('textbox', { name: 'Credit Card Number' }).fill('4111111111111111');
+    await cardNumberFrame.getByRole('textbox', { name: 'Credit Card Number' }).fill(cardNumber);
     await expirationFrame.getByRole('textbox', { name: 'Expiration Date' }).fill('1228');
     await cvvFrame.getByRole('textbox', { name: 'CVV' }).fill('123');
     
@@ -77,7 +78,8 @@ test.describe('S11 - Order history and details viewing', () => {
   });
 
   test('should display order details after creating order', async ({ page }) => {
-    await createTestOrder(page);
+    // Use product index 0, card 4111111111111111
+    await createTestOrder(page, 0, '4111111111111111');
     
     await page.waitForSelector('.border.shadow', { timeout: 10000 });
     
@@ -102,7 +104,8 @@ test.describe('S11 - Order history and details viewing', () => {
   });
 
   test('should display product line items with correct details', async ({ page }) => {
-    await createTestOrder(page);
+    // Use product index 1, different card
+    await createTestOrder(page, 1, '5555555555554444');
     
     await page.waitForSelector('.border.shadow', { timeout: 10000 });
     
@@ -134,15 +137,18 @@ test.describe('S11 - Order history and details viewing', () => {
   });
 
   test('should display multiple orders in correct chronological order', async ({ page }) => {
-    await createTestOrder(page);
+    // First order: product index 2, card 1
+    await createTestOrder(page, 2, '4111111111111111');
     await page.waitForTimeout(2000);
     
     await page.evaluate(() => localStorage.setItem('cart', '[]'));
     
     await page.goto(`${baseURL}/`);
+    await page.waitForResponse(/\/api\/v1\/product\/product-list\/.*/);
     await page.waitForSelector('.card', { timeout: 10000 });
     
-    await page.getByRole('button', { name: 'ADD TO CART' }).nth(1).click();
+    // Second order: product index 3, different card to avoid duplicate payment block
+    await page.getByRole('button', { name: 'ADD TO CART' }).nth(3).click();
     await page.waitForTimeout(1000);
     
     await page.getByRole('link', { name: 'Cart' }).click();
@@ -157,7 +163,8 @@ test.describe('S11 - Order history and details viewing', () => {
     const expirationFrame = page.frameLocator('iframe[name="braintree-hosted-field-expirationDate"]').first();
     const cvvFrame = page.frameLocator('iframe[name="braintree-hosted-field-cvv"]').first();
     
-    await cardNumberFrame.getByRole('textbox', { name: 'Credit Card Number' }).fill('4111111111111111');
+    // Use different card for second payment
+    await cardNumberFrame.getByRole('textbox', { name: 'Credit Card Number' }).fill('5555555555554444');
     await expirationFrame.getByRole('textbox', { name: 'Expiration Date' }).fill('1228');
     await cvvFrame.getByRole('textbox', { name: 'CVV' }).fill('123');
     
@@ -184,12 +191,14 @@ test.describe('S11 - Order history and details viewing', () => {
 
   test('should display order with multiple product line items', async ({ page }) => {
     await page.goto(`${baseURL}/`);
+    await page.waitForResponse(/\/api\/v1\/product\/product-list\/.*/);
     await page.waitForSelector('.card', { timeout: 10000 });
     
-    await page.getByRole('button', { name: 'ADD TO CART' }).first().click();
+    // Add two different products (index 4 and 5)
+    await page.getByRole('button', { name: 'ADD TO CART' }).nth(4).click();
     await page.waitForTimeout(1000);
     
-    await page.getByRole('button', { name: 'ADD TO CART' }).nth(1).click();
+    await page.getByRole('button', { name: 'ADD TO CART' }).nth(5).click();
     await page.waitForTimeout(1000);
     
     await expect(page.locator('.ant-badge-count')).toHaveText('2');
@@ -207,9 +216,10 @@ test.describe('S11 - Order history and details viewing', () => {
     const expirationFrame = page.frameLocator('iframe[name="braintree-hosted-field-expirationDate"]').first();
     const cvvFrame = page.frameLocator('iframe[name="braintree-hosted-field-cvv"]').first();
     
-    await cardNumberFrame.getByRole('textbox', { name: 'Credit Card Number' }).fill('4111111111111111');
+    // Use yet another different card
+    await cardNumberFrame.getByRole('textbox', { name: 'Credit Card Number' }).fill('378282246310005');
     await expirationFrame.getByRole('textbox', { name: 'Expiration Date' }).fill('1228');
-    await cvvFrame.getByRole('textbox', { name: 'CVV' }).fill('123');
+    await cvvFrame.getByRole('textbox', { name: 'CVV' }).fill('1234');
     
     await page.waitForTimeout(1000);
     
@@ -249,7 +259,8 @@ test.describe('S11 - Order history and details viewing', () => {
   });
 
   test('should persist orders after page refresh', async ({ page }) => {
-    await createTestOrder(page);
+    // Use product index 0, yet another card
+    await createTestOrder(page, 0, '6011111111111117');
     
     await page.waitForSelector('.border.shadow', { timeout: 10000 });
     
