@@ -2,7 +2,7 @@
  * Student No: A0213002J
  */
 
-import { test, expect } from '@playwright/test';
+import { test, expect, request } from '@playwright/test';
 import { TEST_USERS } from './fixtures/seedData.js';
 
 test.describe('S11 - Order history and details viewing', () => {
@@ -15,6 +15,12 @@ test.describe('S11 - Order history and details viewing', () => {
   }
 
   test.beforeEach(async ({ page }) => {
+    // Clean up and re-seed database using test API
+    const apiContext = await request.newContext();
+    await apiContext.post('http://localhost:6060/api/v1/test/teardown');
+    await apiContext.post('http://localhost:6060/api/v1/test/seed');
+    await apiContext.dispose();
+    
     await page.goto(baseURL);
     await page.evaluate(() => localStorage.clear());
     
@@ -23,24 +29,6 @@ test.describe('S11 - Order history and details viewing', () => {
     await page.getByRole('textbox', { name: 'Enter Your Password' }).fill(testUser.password);
     await page.getByRole('button', { name: 'LOGIN' }).click();
     await page.waitForURL(baseURL + '/', { timeout: 10000 });
-    
-    await page.evaluate(async () => {
-      const auth = JSON.parse(localStorage.getItem('auth') || '{}');
-      if (auth?.token) {
-        try {
-          await fetch('http://localhost:6060/api/v1/auth/orders', {
-            method: 'DELETE',
-            headers: {
-              'Authorization': auth.token
-            }
-          });
-        } catch (error) {
-          console.log('Delete orders error:', error);
-        }
-      }
-    });
-    
-    await page.waitForTimeout(500);
   });
 
   async function createTestOrder(page) {
@@ -211,7 +199,6 @@ test.describe('S11 - Order history and details viewing', () => {
     await page.waitForSelector('.cart-page', { timeout: 10000 });
     
     await expect(page.locator('p:has-text("You Have 2 items in your cart")')).toBeVisible();
-    
     
     await page.waitForResponse('/api/v1/product/braintree/token');
     await page.waitForSelector('iframe[name*="number"]', { timeout: 15000 });
