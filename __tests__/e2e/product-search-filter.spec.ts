@@ -66,7 +66,7 @@ test.describe("Product Browsing (Search + Filter Feature)", () => {
     await expect(page).toHaveURL(`http://localhost:3000/product/${TAMAGOTCHI.slug}`);
     await expect(page.getByText(`Name : ${TAMAGOTCHI.name}`)).toBeVisible({ timeout: 5000 });
 
-    // Step 5: Navigate back to Home (simulate not wanting to get anything)
+    // Step 5: Naviagte back to Home (simulate not wanting to get anything)
     await page.getByRole('link', { name: 'Home' }).click();
     await expect(page).toHaveURL("http://localhost:3000");
 
@@ -98,7 +98,7 @@ test.describe("Product Browsing (Search + Filter Feature)", () => {
     await expect(page).toHaveURL(`http://localhost:3000/product/${BLACKBERRY.slug}`);
     await expect(page.getByText(`Name : ${BLACKBERRY.name}`)).toBeVisible({ timeout: 5000 });
 
-    // Step 5: Navigate back to Home (simulate not wanting to get anything)
+    // Step 5: Naviagte back to Home (simulate not wanting to get anything)
     await page.getByRole('link', { name: 'Home' }).click();
     await expect(page).toHaveURL("http://localhost:3000");
 
@@ -124,7 +124,7 @@ test.describe("Product Browsing (Search + Filter Feature)", () => {
     const searchProducts = await page.locator(".card").count();
     expect(searchProducts).toEqual(0);
 
-    // Step 5: Navigate back to Home (simulate not wanting to get anything)
+    // Step 5: Naviagte back to Home (simulate not wanting to get anything)
     await page.getByRole('link', { name: 'Home' }).click();
     await expect(page).toHaveURL("http://localhost:3000");
 
@@ -144,14 +144,14 @@ test.describe("Product Browsing (Search + Filter Feature)", () => {
     expect(initialProducts).toBeGreaterThan(0);
 
     await page.getByRole("button", { name: "Load More" }).click();
-    await page.waitForResponse(/\/api\/v1\/product\/product-list\/.*/); // Wait for new products to load
+    await page.waitForTimeout(2000); // Wait for new products to load
     const productsAfterLoadMore = await page.locator('.card').count();
     expect(productsAfterLoadMore).toBeGreaterThan(initialProducts);
 
     // Step 4: Filter by Category (Books)
     await page.getByRole("checkbox", { name: `${BOOKS.name}` }).check();
     // should have lesser product cards (exactly 4 from seedData)
-    await page.waitForResponse("/api/v1/product/product-filters"); // Wait for filtered products to load
+    await page.waitForTimeout(2000); // Wait for filtered products to load
     await page.waitForSelector('.card', { timeout: 5000 });
     const filteredProducts = await page.locator('.card').count();
     expect(filteredProducts).toEqual(4);
@@ -163,7 +163,7 @@ test.describe("Product Browsing (Search + Filter Feature)", () => {
     await expect(page).toHaveURL(`http://localhost:3000/product/${CODING_BOOK.slug}`);
     await expect(page.getByText(`Name : ${CODING_BOOK.name}`)).toBeVisible({ timeout: 5000 });
 
-    // Step 6: Navigate back to Home (simulate not wanting to get anything)
+    // Step 6: Naviagte back to Home (simulate not wanting to get anything)
     await page.getByRole('link', { name: 'Home' }).click();
     await expect(page).toHaveURL("http://localhost:3000");
 
@@ -183,7 +183,7 @@ test.describe("Product Browsing (Search + Filter Feature)", () => {
     expect(initialProducts).toBeGreaterThan(0);
 
     await page.getByRole("button", { name: "Load More" }).click();
-    await page.waitForResponse(/\/api\/v1\/product\/product-list\/.*/); // Wait for new products to load
+    await page.waitForTimeout(2000); // Wait for new products to load
     const productsAfterLoadMore = await page.locator('.card').count();
     expect(productsAfterLoadMore).toBeGreaterThan(initialProducts);
 
@@ -191,7 +191,7 @@ test.describe("Product Browsing (Search + Filter Feature)", () => {
     await page.getByRole("checkbox", { name: `${BOOKS.name}` }).check();
     await page.getByRole("checkbox", { name: `${CLOTHING.name}` }).check();
     // should have lesser product cards (exactly 5 from seedData)
-    await page.waitForResponse("/api/v1/product/product-filters"); // Wait for filtered products to load
+    await page.waitForTimeout(2000); // Wait for filtered products to load
     await page.waitForSelector('.card', { timeout: 5000 });
     const filteredProducts = await page.locator('.card').count();
     expect(filteredProducts).toEqual(5);
@@ -203,7 +203,7 @@ test.describe("Product Browsing (Search + Filter Feature)", () => {
     await expect(page).toHaveURL(`http://localhost:3000/product/${CODING_BOOK.slug}`);
     await expect(page.getByText(`Name : ${CODING_BOOK.name}`)).toBeVisible({ timeout: 5000 });
 
-    // Step 6: Navigate back to Home (simulate not wanting to get anything)
+    // Step 6: Naviagte back to Home (simulate not wanting to get anything)
     await page.getByRole('link', { name: 'Home' }).click();
     await expect(page).toHaveURL("http://localhost:3000");
 
@@ -223,14 +223,14 @@ test.describe("Product Browsing (Search + Filter Feature)", () => {
     expect(initialProducts).toBeGreaterThan(0);
 
     await page.getByRole("button", { name: "Load More" }).click();
-    await page.waitForResponse(/\/api\/v1\/product\/product-list\/.*/); // Wait for new products to load
+    await page.waitForTimeout(2000); // Wait for new products to load
     const productsAfterLoadMore = await page.locator('.card').count();
     expect(productsAfterLoadMore).toBeGreaterThan(initialProducts);
 
     // Step 4: Filter by Price Range ($0 to $19)
     await page.getByRole("radio", { name: "$0 to 19" }).check();
     // should have lesser product cards (exactly 3 from seedData)
-    await page.waitForResponse("/api/v1/product/product-filters"); // Wait for filtered products to load
+    await page.waitForTimeout(2000); // Wait for filtered products to load
     await page.waitForSelector('.card', { timeout: 5000 });
     const filteredProducts = await page.locator('.card').count();
     expect(filteredProducts).toEqual(3);
@@ -242,7 +242,7 @@ test.describe("Product Browsing (Search + Filter Feature)", () => {
     await expect(page).toHaveURL(`http://localhost:3000/product/${CODING_BOOK.slug}`);
     await expect(page.getByText(`Name : ${CODING_BOOK.name}`)).toBeVisible({ timeout: 5000 });
 
-    // Step 6: Navigate back to Home (simulate not wanting to get anything)
+    // Step 6: Naviagte back to Home (simulate not wanting to get anything)
     await page.getByRole('link', { name: 'Home' }).click();
     await expect(page).toHaveURL("http://localhost:3000");
 
@@ -262,7 +262,7 @@ test.describe("Product Browsing (Search + Filter Feature)", () => {
     expect(initialProducts).toBeGreaterThan(0);
 
     await page.getByRole("button", { name: "Load More" }).click();
-    await page.waitForResponse(/\/api\/v1\/product\/product-list\/.*/); // Wait for new products to load
+    await page.waitForTimeout(2000); // Wait for new products to load
     const productsAfterLoadMore = await page.locator('.card').count();
     expect(productsAfterLoadMore).toBeGreaterThan(initialProducts);
 
@@ -270,7 +270,7 @@ test.describe("Product Browsing (Search + Filter Feature)", () => {
     await page.getByRole("checkbox", { name: `${BOOKS.name}` }).check();
     await page.getByRole("radio", { name: "$0 to 19" }).check();
     // should have lesser product cards (exactly 2 from seedData)
-    await page.waitForResponse("/api/v1/product/product-filters"); // Wait for filtered products to load
+    await page.waitForTimeout(2000); // Wait for filtered products to load
     await page.waitForSelector('.card', { timeout: 5000 });
     const filteredProducts = await page.locator('.card').count();
     expect(filteredProducts).toEqual(2);
@@ -282,7 +282,7 @@ test.describe("Product Browsing (Search + Filter Feature)", () => {
     await expect(page).toHaveURL(`http://localhost:3000/product/${CODING_BOOK.slug}`);
     await expect(page.getByText(`Name : ${CODING_BOOK.name}`)).toBeVisible({ timeout: 5000 });
 
-    // Step 6: Navigate back to Home (simulate not wanting to get anything)
+    // Step 6: Naviagte back to Home (simulate not wanting to get anything)
     await page.getByRole('link', { name: 'Home' }).click();
     await expect(page).toHaveURL("http://localhost:3000");
 
@@ -302,7 +302,7 @@ test.describe("Product Browsing (Search + Filter Feature)", () => {
     expect(initialProducts).toBeGreaterThan(0);
 
     await page.getByRole("button", { name: "Load More" }).click();
-    await page.waitForResponse(/\/api\/v1\/product\/product-list\/.*/); // Wait for new products to load
+    await page.waitForTimeout(2000); // Wait for new products to load
     const productsAfterLoadMore = await page.locator('.card').count();
     expect(productsAfterLoadMore).toBeGreaterThan(initialProducts);
 
@@ -310,17 +310,17 @@ test.describe("Product Browsing (Search + Filter Feature)", () => {
     await page.getByRole("checkbox", { name: `${BOOKS.name}` }).check();
     await page.getByRole("radio", { name: "$20 to 39" }).check();
     // should have no products found
-    await page.waitForResponse("/api/v1/product/product-filters"); // Wait for filtered products to load
+    await page.waitForTimeout(2000); // Wait for filtered products to load
     await expect(page.getByText("No products found for this filter.")).toBeVisible({ timeout: 5000 });
 
     // Step 5: Reset Filter
     await page.getByRole('button', { name: 'RESET FILTERS' }).click();
     // should be have more product cards (equal to initialProducts)
-    await page.waitForResponse(/\/api\/v1\/product\/product-list\/.*/); // Wait for filter reset to load
+    await page.waitForTimeout(2000); // Wait for filter reset to load
     const productsAfterReset = await page.locator('.card').count();
     expect(productsAfterReset).toEqual(initialProducts);
 
-    // Step 6: Navigate back to Home (simulate not wanting to get anything)
+    // Step 6: Naviagte back to Home (simulate not wanting to get anything)
     await page.getByRole('link', { name: 'Home' }).click();
     await expect(page).toHaveURL("http://localhost:3000");
 

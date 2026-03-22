@@ -55,7 +55,7 @@ test.describe("Product Browsing (Home + Category Product + Product Detail Pages)
     expect(initialProducts).toBeGreaterThan(0);
     
     await page.getByRole("button", { name: "Load More" }).click();
-    await page.waitForResponse(/\/api\/v1\/product\/product-list\/.*/); // Wait for new products to load
+    await page.waitForTimeout(2000); // Wait for new products to load
     const productsAfterLoadMore = await page.locator('.card').count();
     expect(productsAfterLoadMore).toBeGreaterThan(initialProducts);
 
@@ -71,7 +71,7 @@ test.describe("Product Browsing (Home + Category Product + Product Detail Pages)
     expect(initialCategoryProducts).toBeGreaterThan(0);
 
     await page.getByRole("button", { name: "Load More" }).click();
-    await page.waitForResponse(/\/api\/v1\/product\/product-category\/.*/); // Wait for new products to load
+    await page.waitForTimeout(2000); // Wait for new products to load
     const categoryProductsAfterLoadMore = await page.locator('.card').count();
     expect(categoryProductsAfterLoadMore).toBeGreaterThan(initialCategoryProducts);
 
@@ -87,7 +87,7 @@ test.describe("Product Browsing (Home + Category Product + Product Detail Pages)
     await expect(page).toHaveURL(`http://localhost:3000/product/${LAPTOP.slug}`);
     await expect(page.getByText(`Name : ${LAPTOP.name}`)).toBeVisible({ timeout: 5000 });
 
-    // Step 8: Navigate back to Home (simulate not wanting to get anything)
+    // Step 8: Naviagte back to Home (simulate not wanting to get anything)
     await page.getByRole('link', { name: 'Home' }).click();
     await expect(page).toHaveURL("http://localhost:3000");
 
@@ -107,7 +107,7 @@ test.describe("Product Browsing (Home + Category Product + Product Detail Pages)
     expect(initialProducts).toBeGreaterThan(0);
     
     await page.getByRole("button", { name: "Load More" }).click();
-    await page.waitForResponse(/\/api\/v1\/product\/product-list\/.*/); // Wait for new products to load
+    await page.waitForTimeout(2000); // Wait for new products to load
     const productsAfterLoadMore = await page.locator('.card').count();
     expect(productsAfterLoadMore).toBeGreaterThan(initialProducts);
 
@@ -120,7 +120,7 @@ test.describe("Product Browsing (Home + Category Product + Product Detail Pages)
     const initialCategoryProducts = await page.locator('.card').count();
     expect(initialCategoryProducts).toEqual(0);
 
-    // Step 5: Navigate back to Home (simulate not wanting to get anything)
+    // Step 5: Naviagte back to Home (simulate not wanting to get anything)
     await page.getByRole('link', { name: 'Home' }).click();
     await expect(page).toHaveURL("http://localhost:3000");
 
@@ -140,7 +140,7 @@ test.describe("Product Browsing (Home + Category Product + Product Detail Pages)
     expect(initialProducts).toBeGreaterThan(0);
     
     await page.getByRole("button", { name: "Load More" }).click();
-    await page.waitForResponse(/\/api\/v1\/product\/product-list\/.*/); // Wait for new products to load
+    await page.waitForTimeout(2000); // Wait for new products to load
     const productsAfterLoadMore = await page.locator('.card').count();
     expect(productsAfterLoadMore).toBeGreaterThan(initialProducts);
 
@@ -160,7 +160,7 @@ test.describe("Product Browsing (Home + Category Product + Product Detail Pages)
     const relatedProductCount = await page.locator('.similar-products .card').count();
     expect(relatedProductCount).toEqual(0);
 
-    // Step 6: Navigate back to Home (simulate not wanting to get anything)
+    // Step 6: Naviagte back to Home (simulate not wanting to get anything)
     await page.getByRole('link', { name: 'Home' }).click();
     await expect(page).toHaveURL("http://localhost:3000");
 
