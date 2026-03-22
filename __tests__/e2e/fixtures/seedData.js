@@ -84,4 +84,17 @@ export const TEST_USERS = [
   },
 ];
 
-export const TEST_ORDERS = []; // add if you want (but change controller)
+export const TEST_ORDERS = [
+  {
+    productSlugs: ["laptop", "textbook"], // resolved to _id in controller
+    buyerEmail: "e2etest_normal_user@example.com", // resolved to _id in controller
+    payment: { success: true, transactionId: "txn_001" },
+    status: "Not Processed",
+  },
+  {
+    productSlugs: ["nus-tshirt"], // resolved to _id in controller
+    buyerEmail: "e2etest_normal_user@example.com", // resolved to _id in controller
+    payment: { success: false, transactionId: "txn_002" },
+    status: "Not Processed",
+  }
+];
