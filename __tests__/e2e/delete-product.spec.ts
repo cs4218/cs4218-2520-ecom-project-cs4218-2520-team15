@@ -136,11 +136,9 @@ test.describe("Admin Delete Product", () => {
 
       await test.step("place an order", async () => {
         await page.getByRole("link", { name: "Home" }).click();
-        await page.waitForResponse(/\/api\/v1\/product\/product-list\/.*/);
         await page.getByRole("button", { name: "ADD TO CART" }).nth(0).click(); // Last item in TEST_PRODUCTS
         await page.getByRole("link", { name: "Cart" }).click();
         await page.waitForResponse("/api/v1/product/braintree/token");
-        await page.getByRole("button", { name: "Paying with Card" }).click();
         const creditCardInput = page
           .locator('iframe[name="braintree-hosted-field-number"]')
           .contentFrame()
