@@ -147,6 +147,86 @@ https://github.com/cs4218/cs4218-2520-ecom-project-cs4218-2520-team15/actions/ru
   - pages/Pagenotfound.js
   - config/db.js
 
+## Project Milestone 2 (MS2)
+
+### Mahadhir Bin Mohd Ismail, A0252808B
+
+- Integration Tests
+  - authController.forgotPassword.integration.test.js
+  - authController.forgotPasswordApi.integration.test.js
+  - authController.login.integration.test.js
+  - authController.loginApi.integration.test.js
+  - authController.register.integration.test.js
+  - authController.registerApi.integration.test.js
+
+- UI Tests
+  - adminAccess.spec.ts
+  - forgotPassword.spec.ts
+  - persistence.spec.ts
+  - registration.spec.ts
+
+---
+
+### Lee Guan Kai Delon, A0273286W
+
+- Integration Tests
+  - categoryController.write.integration.test.js
+  - productController.write.integration.test.js
+
+- UI Tests
+  - create-category.spec.ts
+  - update-category.spec.ts
+  - delete-category.spec.ts
+  - create-product.spec.ts
+  - update-product.spec.ts
+  - delete-product.spec.ts
+  - admin-users-management.spec.ts
+
+---
+
+### Kok Fangyu Inez, A0258672R
+
+- Integration Tests
+  - productController.home.integration.test.js
+  - productController.search.integration.test.js
+  - productController.view.integration.test.js
+  - productRoutes.home.integration.test.js
+  - productRoutes.search.integration.test.js
+  - productRoutes.view.integration.test.js
+
+- UI Tests
+  - browsing-home-category.spec.ts
+  - product-search-filter.spec.ts
+  - static-pages.spec.ts
+
+---
+
+### Lim Jin Yin, A0256976H
+
+- Integration Tests
+  - updateProfile.integration.test.js
+  - userOrders.integration.test.js
+  - adminViewOrders.integration.test.js
+  - adminViewUsers.integration.test.js
+
+- UI Tests
+  - admin-orders.spec.ts
+  - checkout-edge-cases.spec.ts
+  - profile-update.spec.ts
+
+---
+
+### Tan Qin Xu, A0213002J
+
+- Integration Tests
+  - braintree.integration.test.js
+  - genericCategory.integration.test.js
+
+- UI Tests
+  - addToCart.spec.ts
+  - checkoutPayment.spec.ts
+  - orderHistory.spec.ts
+
 ## 1. Project Introduction
 
 Virtual Vault is a full-stack MERN (MongoDB, Express.js, React.js, Node.js) e-commerce website, offering seamless connectivity and user-friendly features. The platform provides a robust framework for online shopping. The website is designed to adapt to evolving business needs and can be efficiently extended.
@@ -283,7 +363,7 @@ To begin unit testing with Jest in your project, follow these steps:
 
 ## 6. UI Testing with Playwright (Scenario-Based)
 
-- **Overview**: UI tests are end-to-end, black-box tests written with Playwright. They exercise complete user and admin workflows across multiple pages (e.g. *login → browse → add to cart → checkout → verify orders*), not just isolated UI elements.
+- **Overview**: UI tests are end-to-end, black-box tests written with Playwright. They exercise complete user and admin workflows across multiple pages (e.g. _login → browse → add to cart → checkout → verify orders_), not just isolated UI elements.
 - **Location**: Place UI tests under a `playwright/tests` directory (e.g. `playwright/tests/auth.e2e.spec.ts`), using the Playwright MCP server configured in `.vscode/mcp.json` as needed.
 - **Routing coverage**: Scenarios below are designed to cover the main routes defined in `client/src/App.js`, including:
   - Public routes: `/`, `/product/:slug`, `/categories`, `/category/:slug`, `/cart`, `/search`, `/about`, `/contact`, `/policy`, `/register`, `/login`, `/forgot-password`, and `*` (404).
