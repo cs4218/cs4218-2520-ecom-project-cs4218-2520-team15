@@ -1,3 +1,7 @@
+/* Name: Mahadhir Bin Mohd Ismail
+ * Student No: A0252808B
+ */
+
 import { test, expect } from '@playwright/test';
 import { TEST_USERS } from './fixtures/seedData';
 
