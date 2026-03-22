@@ -28,6 +28,8 @@ export default {
   // jest code coverage
   collectCoverage: true,
   collectCoverageFrom: ["client/src/**"],
+  coverageDirectory: "coverage/frontend",
+  coverageReporters: ["lcov", "text", "html"],
   coveragePathIgnorePatterns: [
     "/node_modules/",
     "<rootDir>/client/src/_site/",
