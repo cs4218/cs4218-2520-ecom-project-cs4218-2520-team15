@@ -1,3 +1,7 @@
+/* Name: Mahadhir Bin Mohd Ismail
+ * Student No: A0252808B
+ */
+
 import { test, expect } from '@playwright/test';
 import { TEST_USERS } from './fixtures/seedData';
 
@@ -6,6 +10,11 @@ const USER = TEST_USERS[1];
 test.describe('Password Reset', () => {
     test.beforeAll(async ({ request }) => {
         // Ensure database is in seed state before running tests
+        const res = await request.post('http://localhost:6060/api/v1/test/seed');
+    });
+
+    test.afterAll(async ({ request }) => {
+        // Ensure database is in seed state after running tests
         const res = await request.post('http://localhost:6060/api/v1/test/seed');
     });
 
