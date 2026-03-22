@@ -4,6 +4,7 @@ export const TEST_CATEGORIES = [
   { name: "Electronics", slug: "electronics" },
   { name: "Clothing", slug: "clothing" },
   { name: "Books", slug: "books" },
+  { name: "Stationeries", slug: "stationeries" },
 ];
 
 export const TEST_PRODUCTS = [
@@ -15,6 +16,8 @@ export const TEST_PRODUCTS = [
     categorySlug: "electronics", // resolved to _id in controller
     quantity: 30,
     shipping: true,
+    photoFilename: "laptop.jpeg",
+    contentType: "image/jpeg",
   },
   {
     name: "Smartphone",
@@ -24,6 +27,8 @@ export const TEST_PRODUCTS = [
     categorySlug: "electronics",
     quantity: 50,
     shipping: false,
+    photoFilename: "smartphone.jpeg",
+    contentType: "image/jpeg",
   },
   {
     name: "Textbook",
@@ -33,6 +38,8 @@ export const TEST_PRODUCTS = [
     categorySlug: "books",
     quantity: 50,
     shipping: false,
+    photoFilename: "textbook.jpeg",
+    contentType: "image/jpeg",
   },
   {
     name: "Novel",
@@ -42,6 +49,8 @@ export const TEST_PRODUCTS = [
     categorySlug: "books",
     quantity: 200,
     shipping: true,
+    photoFilename: "novel.jpeg",
+    contentType: "image/jpeg",
   },
   {
     name: "The Law of Contract in Singapore",
@@ -51,6 +60,8 @@ export const TEST_PRODUCTS = [
     categorySlug: "books",
     quantity: 200,
     shipping: true,
+    photoFilename: "law-book.jpeg",
+    contentType: "image/jpeg",
   },
   {
     name: "NUS T-shirt",
@@ -60,6 +71,41 @@ export const TEST_PRODUCTS = [
     categorySlug: "clothing",
     quantity: 200,
     shipping: true,
+    photoFilename: "nus-tshirt.jpeg",
+    contentType: "image/jpeg",
+  },
+  {
+    name: "BlackBerry Phone",
+    slug: "blackberry-phone",
+    description: "Blackberry, strawberry, raspberry, blueberry, cranberry, gooseberry",
+    price: 89.99,
+    categorySlug: "electronics",
+    quantity: 10,
+    shipping: true,
+    photoFilename: "blackberry-phone.jpg",
+    contentType: "image/jpeg",
+  },
+  {
+    name: "Coding For Dummies Book",
+    slug: "coding-for-dummies-book",
+    description: "Good read for me",
+    price: 15.99,
+    categorySlug: "books",
+    quantity: 10,
+    shipping: true,
+    photoFilename: "coding-for-dummies-book.jpg",
+    contentType: "image/jpeg",
+  },
+  {
+    name: "Tamagotchi",
+    slug: "tamagotchi",
+    description: "Cute egg pet",
+    price: 21.99,
+    categorySlug: "electronics",
+    quantity: 10,
+    shipping: true,
+    photoFilename: "tamagotchi.jpeg",
+    contentType: "image/jpeg",
   },
 ];
 
