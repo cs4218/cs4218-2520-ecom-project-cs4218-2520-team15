@@ -52,6 +52,7 @@ export const seedDatabase = async (req, res) => {
     console.log('✅ Categories created:', Object.keys(categoryMap).length);
 
     // Create products, resolving categorySlug --> _id and loading images from disk
+    const productMap = {};
     for (const product of TEST_PRODUCTS) {
       const { categorySlug, photoFilename, contentType, ...rest } = product;
       
@@ -84,7 +85,7 @@ export const seedDatabase = async (req, res) => {
         }
       }
 
-      await new productModel({
+      const saved = await new productModel({
         ...rest,
         category: categoryMap[categorySlug],
         ...(photoData && { photo: photoData }),
