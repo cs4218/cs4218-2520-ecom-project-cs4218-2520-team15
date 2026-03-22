@@ -24,7 +24,6 @@ test.describe('S11 - Order history and details viewing', () => {
     await page.getByRole('button', { name: 'LOGIN' }).click();
     await page.waitForURL(baseURL + '/', { timeout: 10000 });
     
-    // Clean up existing orders
     await page.evaluate(async () => {
       const auth = JSON.parse(localStorage.getItem('auth') || '{}');
       if (auth?.token) {
@@ -55,27 +54,6 @@ test.describe('S11 - Order history and details viewing', () => {
     await page.waitForURL(`${baseURL}/cart`);
     await page.waitForSelector('.cart-page', { timeout: 10000 });
     
-    const updateAddressBtn = page.getByRole('button', { name: 'Update Address' });
-    const updateBtnVisible = await updateAddressBtn.isVisible().catch(() => false);
-    
-    if (updateBtnVisible) {
-      await page.getByRole('button', { name: testUser.name }).click();
-      await page.waitForTimeout(500);
-      await page.getByRole('link', { name: 'Dashboard' }).click();
-      await page.waitForURL(/\/dashboard\/user/, { timeout: 10000 });
-      
-      await page.getByRole('link', { name: 'Profile' }).click();
-      await page.waitForURL(/\/dashboard\/user\/profile/);
-      
-      await page.waitForSelector('input#profile-address', { timeout: 5000 });
-      await page.fill('input#profile-address', testUser.address);
-      await page.getByRole('button', { name: 'UPDATE' }).click();
-      await page.waitForTimeout(2000);
-      
-      await page.getByRole('link', { name: 'Cart' }).click();
-      await page.waitForURL(`${baseURL}/cart`);
-    }
-    
     await page.waitForResponse('/api/v1/product/braintree/token');
     await page.waitForSelector('iframe[name*="number"]', { timeout: 15000 });
     
@@ -103,16 +81,6 @@ test.describe('S11 - Order history and details viewing', () => {
     
     await page.getByRole('link', { name: 'Dashboard' }).click();
     await page.waitForURL(/\/dashboard\/user/, { timeout: 10000 });
-    
-    await page.getByRole('link', { name: 'Orders' }).click();
-    await page.waitForURL(`${baseURL}/dashboard/user/orders`);
-    
-    await expect(page.getByRole('heading', { name: 'Your Orders' })).toBeVisible();
-  });
-
-  test('should navigate to orders page via UserMenu', async ({ page }) => {
-    await page.goto(`${baseURL}/dashboard/user`);
-    await page.waitForSelector('.list-group', { timeout: 10000 });
     
     await page.getByRole('link', { name: 'Orders' }).click();
     await page.waitForURL(`${baseURL}/dashboard/user/orders`);
@@ -244,26 +212,6 @@ test.describe('S11 - Order history and details viewing', () => {
     
     await expect(page.locator('p:has-text("You Have 2 items in your cart")')).toBeVisible();
     
-    const updateAddressBtn = page.getByRole('button', { name: 'Update Address' });
-    const updateBtnVisible = await updateAddressBtn.isVisible().catch(() => false);
-    
-    if (updateBtnVisible) {
-      await page.getByRole('button', { name: testUser.name }).click();
-      await page.waitForTimeout(500);
-      await page.getByRole('link', { name: 'Dashboard' }).click();
-      await page.waitForURL(/\/dashboard\/user/, { timeout: 10000 });
-      
-      await page.getByRole('link', { name: 'Profile' }).click();
-      await page.waitForURL(/\/dashboard\/user\/profile/);
-      
-      await page.waitForSelector('input#profile-address', { timeout: 5000 });
-      await page.fill('input#profile-address', testUser.address);
-      await page.getByRole('button', { name: 'UPDATE' }).click();
-      await page.waitForTimeout(2000);
-      
-      await page.getByRole('link', { name: 'Cart' }).click();
-      await page.waitForURL(`${baseURL}/cart`);
-    }
     
     await page.waitForResponse('/api/v1/product/braintree/token');
     await page.waitForSelector('iframe[name*="number"]', { timeout: 15000 });
