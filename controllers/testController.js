@@ -51,7 +51,9 @@ export const seedDatabase = async (req, res) => {
     
     console.log('✅ Categories created:', Object.keys(categoryMap).length);
 
+    const productMap = {};
     // Create products, resolving categorySlug --> _id and loading images from disk
+    const productMap = {};
     for (const product of TEST_PRODUCTS) {
       const { categorySlug, photoFilename, contentType, ...rest } = product;
       
@@ -84,16 +86,49 @@ export const seedDatabase = async (req, res) => {
         }
       }
 
-      await new productModel({
+      const saved = await new productModel({
         ...rest,
         category: categoryMap[categorySlug],
         ...(photoData && { photo: photoData }),
       }).save();
+      productMap[product.slug] = saved._id;
     }
     
     console.log('✅ Products created:', TEST_PRODUCTS.length);
 
-    // Create orders (not added here since empty)
+    // Build an email -> _id map for users to resolve orders
+    const userMap = {
+      [createdAdmin.email]: createdAdmin._id,
+      [createdNormal.email]: createdNormal._id,
+    };
+
+    // Create orders, resolving buyerEmail --> _id and productSlugs --> _ids
+    let ordersCreated = 0;
+    for (const order of TEST_ORDERS) {
+      const { buyerEmail, productSlugs, ...rest } = order;
+
+      const productIds = productSlugs.map(slug => {
+        const id = productMap[slug];
+        if (!id) {
+          throw new Error(`Product slug "${slug}" not found in productMap`);
+        }
+        return id;
+      });
+
+      const buyerId = userMap[buyerEmail];
+      if (!buyerId) {
+        throw new Error(`Buyer email "${buyerEmail}" not found in userMap`);
+      }
+
+      await new orderModel({
+        ...rest,
+        buyer: buyerId,
+        products: productIds
+      }).save();
+      ordersCreated++;
+    }
+
+    console.log('✅ Orders created:', ordersCreated);
 
     res.status(200).json({ 
       success: true, 
@@ -102,6 +137,7 @@ export const seedDatabase = async (req, res) => {
         users: 2,
         categories: Object.keys(categoryMap).length,
         products: TEST_PRODUCTS.length,
+        orders: ordersCreated
       }
     });
   } catch (error) {
@@ -148,6 +184,32 @@ export const checkSeededUsers = async (req, res) => {
     });
   } catch (error) {
     console.error("Check users error:", error);
+    res.status(500).json({ success: false, message: "Check failed", error: error.message });
+  }
+};
+
+export const checkSeededOrders = async (req, res) => {
+  try {
+    const orders = await orderModel.find({})
+      .populate("products", "name slug price description")
+      .populate("buyer", "name email")
+      .sort({ createdAt: -1 });
+
+    console.log('Orders in database:', orders.length);
+    res.status(200).json({
+      success: true,
+      count: orders.length,
+      orders: orders.map(o => ({
+        _id: o._id,
+        status: o.status,
+        payment: o.payment,
+        buyer: o.buyer,
+        products: o.products,
+        createdAt: o.createdAt,
+      }))
+    });
+  } catch (error) {
+    console.error("Check orders error:", error);
     res.status(500).json({ success: false, message: "Check failed", error: error.message });
   }
 };
