@@ -9,7 +9,7 @@ test.describe('S7 - Add-to-cart from multiple entry points', () => {
   const baseURL = 'http://localhost:3000';
   
   const testUser = TEST_USERS.find(user => user.role === 0);
-  
+
   if (!testUser) {
     throw new Error('Normal test user not found in seed data');
   }
@@ -34,7 +34,7 @@ test.describe('S7 - Add-to-cart from multiple entry points', () => {
 
     // 2. Add from category listing page
     await page.getByRole('link', { name: 'Categories' }).click();
-    await page.getByRole('link', { name: 'Electronics' }).click();
+    await page.getByRole('link', { name: 'Clothing' }).click();
     await page.waitForURL(/\/category\//);
     
     await page.getByRole('button', { name: 'ADD TO CART' }).first().click();
@@ -44,7 +44,7 @@ test.describe('S7 - Add-to-cart from multiple entry points', () => {
     await page.goto(baseURL);
     await page.waitForSelector('[role="button"]', { timeout: 10000 });
     
-    await page.getByRole('button', { name: 'More Details' }).first().click();
+    await page.getByRole('button', { name: 'More Details' }).nth(1).click();
     await page.waitForURL(/\/product\//);
     
     await page.getByRole('button', { name: 'ADD TO CART' }).first().click();
