@@ -110,7 +110,7 @@ test.describe("Admin Delete Product", () => {
   });
 
   test.describe(async () => {
-    const product = TEST_PRODUCTS[0];
+    const product = TEST_PRODUCTS[TEST_PRODUCTS.length - 1];
 
     test.beforeEach(async ({ page }) => {
       await test.step("logout as an admin", async () => {
@@ -137,7 +137,7 @@ test.describe("Admin Delete Product", () => {
       await test.step("place an order", async () => {
         await page.getByRole("link", { name: "Home" }).click();
         await page.waitForResponse(/\/api\/v1\/product\/product-list\/.*/);
-        await page.getByRole("button", { name: "ADD TO CART" }).nth(5).click(); // First item in TEST_PRODUCTS
+        await page.getByRole("button", { name: "ADD TO CART" }).nth(0).click(); // Last item in TEST_PRODUCTS
         await page.getByRole("link", { name: "Cart" }).click();
         await page.waitForResponse("/api/v1/product/braintree/token");
         await page.getByRole("button", { name: "Paying with Card" }).click();
@@ -146,7 +146,7 @@ test.describe("Admin Delete Product", () => {
           .contentFrame()
           .getByRole("textbox", { name: "Credit Card Number" });
         await creditCardInput.click();
-        await creditCardInput.fill("4096362186971710");
+        await creditCardInput.fill("4111111111111111");
         const expirationInput = page
           .locator('iframe[name="braintree-hosted-field-expirationDate"]')
           .contentFrame()

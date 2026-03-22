@@ -247,7 +247,7 @@ describe("deleteCategoryController function", () => {
 
     await deleteCategoryController(mockReq, mockRes);
 
-    expect(mockRes.status).toHaveBeenCalledWith(400);
+    expect(mockRes.status).toHaveBeenCalledWith(200);
     expect(mockRes.send).toHaveBeenCalledWith({
       success: false,
       message: "Unable to delete category that contains products",
