@@ -116,7 +116,7 @@ export const deleteCategoryController = async (req, res) => {
     const { id } = req.params;
     const productsCount = await productModel.countDocuments({ category: id });
     if (productsCount > 0) {
-      return res.status(400).send({
+      return res.status(200).send({
         success: false,
         message: "Unable to delete category that contains products",
       });
