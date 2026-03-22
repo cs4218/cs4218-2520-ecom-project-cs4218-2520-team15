@@ -8,7 +8,7 @@ import { TEST_USERS } from "./fixtures/seedData";
 
 const USER  = TEST_USERS[1];
 
-test.describe("User Profile Update", () => {
+test.describe.serial("User Profile Update", () => {
 
   const fillField = async (page: Page, placeholder: string, value: string) => {
     const input = page.getByPlaceholder(placeholder);
@@ -23,23 +23,35 @@ test.describe("User Profile Update", () => {
     });
     const submitButton = profileForm.locator('button[type="submit"]');
     await expect(submitButton).toBeVisible();
-    await submitButton.click();
-    await page.waitForLoadState("networkidle");
+    
+    const urlPart = '/api/v1/auth/profile';
+    const networkDone = Promise.race([
+      page.waitForResponse((resp) => resp.url().includes(urlPart)),
+      page.waitForEvent('requestfailed', (req) => req.url().includes(urlPart)),
+      page.waitForEvent('requestfinished', (req) => req.url().includes(urlPart)),
+    ]);
+
+    await Promise.all([
+      submitButton.click(),
+      networkDone,
+    ]);
+
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(250);
   };
 
   const resetProfile = async (page: Page) => {
-    await page.evaluate(async () => {
-      try {
-        await fetch('/api/v1/test/teardown', { method: 'POST' });
-        await fetch('/api/v1/test/seed', { method: 'POST' });
-        localStorage.removeItem('auth');
-      } catch (err) {
-        console.error('resetProfile API error', err);
-      }
-    });
+    try {
+      await page.request.post('/api/v1/test/teardown');
+      await page.request.post('/api/v1/test/seed');
+    } catch (err) {
+      console.error('resetProfile API error', err);
+    }
 
+    await page.evaluate(() => localStorage.removeItem('auth'));
     await page.goto('/');
     await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(250);
   };
 
 
@@ -55,12 +67,15 @@ test.describe("User Profile Update", () => {
       await passwordInput.click();
       await passwordInput.fill(USER.password);
       await page.getByRole("button", { name: "LOGIN" }).click();
+      await page.waitForLoadState("networkidle");
+      await page.waitForTimeout(500);
     });
 
     await test.step("navigate to profile page", async () => {
       await page.getByRole("button", { name: USER.name }).click();
       await page.getByRole("link", { name: "DASHBOARD" }).click();
       await page.getByRole("link", { name: "Profile" }).click();
+      await page.waitForLoadState("networkidle");
     });
   });
 
@@ -156,26 +171,33 @@ test.describe("User Profile Update", () => {
     });
   });
 
-  test("should show success when the form is submitted without any changes", async ({ page }) => {
-    await submitForm(page);
+  test.describe(() => {
+    test.afterEach(async ({ page }) => {
+      await resetProfile(page);
+    });
 
-    await expect(page.getByText("Profile Updated Successfully")).toBeVisible();
-    await expect(page.getByPlaceholder("Enter Your Name")).toHaveValue(USER.name);
-  });
+    test("should show success when the form is submitted without any changes", async ({ page }) => {
+      await submitForm(page);
 
-  test("should not be possible to type into the email field", async ({ page }) => {
-    const emailInput = page.getByPlaceholder("Enter Your Email");
-    
-    await emailInput.press("a");
-    await expect(emailInput).toHaveValue(USER.email);
-  });
+      await expect(page.getByText("Profile Updated Successfully")).toBeVisible();
+      await expect(page.getByPlaceholder("Enter Your Name")).toHaveValue(USER.name);
+    });
 
-  test("should preserve the original email after a successful profile update", async ({ page }) => {
-    await fillField(page, "Enter Your Name", "Email Attempt");
-    await submitForm(page);
+    test("should not be possible to type into the email field", async ({ page }) => {
+      const emailInput = page.getByPlaceholder("Enter Your Email");
+      
+      await emailInput.press("a");
+      await expect(emailInput).toHaveValue(USER.email);
+    });
 
-    await expect(page.getByText("Profile Updated Successfully")).toBeVisible();
-    await expect(page.getByPlaceholder("Enter Your Email")).toHaveValue(USER.email);
+    test("should preserve the original email after a successful profile update", async ({ page }) => {
+      await fillField(page, "Enter Your Name", "Email Attempt");
+      await submitForm(page);
+
+      await expect(page.getByText("Profile Updated Successfully")).toBeVisible();
+      await expect(page.getByPlaceholder("Enter Your Email")).toHaveValue(USER.email);
+    });
+
   });
 
   test.describe(() => {
@@ -251,6 +273,7 @@ test.describe("User Profile Update", () => {
       await fillField(page, "Enter Your Name", "First Update");
       await submitForm(page);
       await expect(page.getByText("Profile Updated Successfully")).toBeVisible();
+      await page.waitForTimeout(5250);
 
       await fillField(page, "Enter Your Name", "Second Update");
       await submitForm(page);
@@ -271,9 +294,11 @@ test.describe("User Profile Update", () => {
       await submitForm(page);
 
       await expect(page.getByText("Profile Updated Successfully")).toBeVisible();
+      await page.waitForTimeout(500);
 
       await page.reload();
       await page.waitForLoadState("networkidle");
+      await page.waitForTimeout(500);
 
       await expect(page.getByPlaceholder("Enter Your Name")).toHaveValue("Persisted Name");
       await expect(page.getByPlaceholder("Enter Your Phone")).toHaveValue("55556666");
