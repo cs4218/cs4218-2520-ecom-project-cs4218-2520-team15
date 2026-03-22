@@ -1,3 +1,7 @@
+/* Name: Mahadhir Bin Mohd Ismail
+ * Student No: A0252808B
+ */
+
 import { test, expect } from '@playwright/test';
 import { TEST_USERS } from "./fixtures/seedData";
 
@@ -46,6 +50,33 @@ test.describe('Admin Access', () => {
 
         // Toast popup
         await expect(page.locator('div').filter({ hasText: 'login successfully' }).nth(4)).toBeVisible();
+
+        // Able to go to user dashboard
+        await page.getByRole('button', { name: USER.name }).click();
+        await page.getByRole('link', { name: 'Dashboard' }).click();
+        await page.waitForURL('**/dashboard/user');
+
+        // Able to see user's information
+        await expect(page.getByRole('heading', { name: `Name: ${USER.name}` })).toBeVisible();
+        await expect(page.getByRole('heading', { name: `Email: ${USER.email}` })).toBeVisible();
+        await expect(page.getByRole('heading', { name: `Address: ${USER.address}` })).toBeVisible();
+
+        // Able to see user features
+        await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible();
+        await expect(page.getByRole('link', { name: 'Profile' })).toBeVisible();
+        await expect(page.getByRole('link', { name: 'Orders' })).toBeVisible();
+
+        // Not able to see admin's information
+        await expect(page.getByRole('heading', { name: `Admin Name : ${USER.name}` })).not.toBeVisible();
+        await expect(page.getByRole('heading', { name: `Admin Email : ${USER.email}` })).not.toBeVisible();
+        await expect(page.getByRole('heading', { name: `Admin Contact : ${USER.phone}` })).not.toBeVisible();
+
+        // Not able to see admin panel features
+        await expect(page.getByRole('heading', { name: 'Admin Panel' })).not.toBeVisible();
+        await expect(page.getByRole('link', { name: 'Create Category' })).not.toBeVisible();
+        await expect(page.getByRole('link', { name: 'Create Product' })).not.toBeVisible();
+        await expect(page.getByRole('link', { name: 'Products' })).not.toBeVisible();
+        await expect(page.getByRole('link', { name: 'Users' })).not.toBeVisible();
 
         // Attempt to access admin dashboard
         await page.goto('http://localhost:3000/dashboard/admin');
