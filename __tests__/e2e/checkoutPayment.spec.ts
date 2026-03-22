@@ -108,6 +108,9 @@ test.describe('S8 - Checkout and payment happy path', () => {
 
   test('should not allow payment if is guest user', async ({ page }) => {
     test.setTimeout(60000);
+
+    await page.getByRole('button', { name: 'E2E Test Normal User' }).click();
+    await page.getByRole('link', { name: 'Logout' }).click();
     
     await page.goto(`${baseURL}/`);
     await page.waitForSelector('.card', { timeout: 10000 });
@@ -115,18 +118,10 @@ test.describe('S8 - Checkout and payment happy path', () => {
     await page.waitForTimeout(1000);
     
     await page.getByRole('link', { name: 'Cart' }).click();
+    await page.waitForURL("/cart");
     
-    const iframe = page.locator('iframe[name*="braintree"]');
-    const iframeVisible = await iframe.isVisible().catch(() => false);
-    
-    if (iframeVisible) {
-      await page.waitForSelector('iframe[name*="braintree"]', { timeout: 10000 });
-      
-      const paymentBtn = page.getByRole('button', { name: 'Make Payment' });
-      const isDisabled = await paymentBtn.isDisabled().catch(() => true);
-      
-      expect(isDisabled).toBeTruthy();
-    }
+    await expect(page.getByRole('button', { name: 'Please Login to checkout' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Make Payment' })).not.toBeVisible();
   });
 
   test('should show payment loading state', async ({ page }) => {
