@@ -116,6 +116,7 @@ export const TEST_USERS = [
     password: "TestAdmin@12345",
     phone: "91234567",
     address: "123 Test Street",
+    dob: '2001-01-01',
     answer: "playwright",
     role: 1 // admin
   },
@@ -125,6 +126,7 @@ export const TEST_USERS = [
     password: "TestNormal@12345",
     phone: "91237654",
     address: "456 Test Street",
+    dob: '2001-01-02',
     answer: "playwright",
     role: 0 // normal user
   },
