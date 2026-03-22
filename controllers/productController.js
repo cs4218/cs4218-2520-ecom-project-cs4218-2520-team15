@@ -11,7 +11,7 @@ dotenv.config();
 
 //payment gateway
 var gateway;
-if (process.env.NODE_ENV !== "test") {
+if (process.env.NODE_ENV !== "test" || (process.env.BRAINTREE_MERCHANT_ID && process.env.BRAINTREE_PUBLIC_KEY)) {
   gateway = new braintree.BraintreeGateway({
     environment: braintree.Environment.Sandbox,
     merchantId: process.env.BRAINTREE_MERCHANT_ID,
@@ -301,7 +301,7 @@ export const productFiltersController = async (req, res) => {
     });
   } catch (error) {
     console.log(error);
-    res.status(400).send({
+    res.status(500).send({
       success: false,
       message: "Error while filtering products",
       error,
@@ -320,7 +320,7 @@ export const productCountController = async (req, res) => {
     });
   } catch (error) {
     console.log(error);
-    res.status(400).send({
+    res.status(500).send({
       message: "Error in counting products",
       error,
       success: false,
@@ -347,7 +347,7 @@ export const productListController = async (req, res) => {
     });
   } catch (error) {
     console.log(error);
-    res.status(400).send({
+    res.status(500).send({
       success: false,
       message: "Error in listing products per page",
       error,
@@ -413,7 +413,7 @@ export const relatedProductController = async (req, res) => {
     });
   } catch (error) {
     console.log(error);
-    res.status(400).send({
+    res.status(500).send({
       success: false,
       message: "Error while getting related products",
       error,
@@ -454,7 +454,7 @@ export const productCategoryController = async (req, res) => {
     });
   } catch (error) {
     console.log(error);
-    res.status(400).send({
+    res.status(500).send({
       success: false,
       error,
       message: "Error while getting products by category",
@@ -466,6 +466,7 @@ export const productCategoryController = async (req, res) => {
 //token
 export const braintreeTokenController = async (req, res) => {
   try {
+    console.log('🔍 Gateway status:', !!gateway, typeof gateway);
     if (!gateway) {
       return res.status(500).send("Braintree not initialized");
     }
@@ -495,6 +496,17 @@ export const brainTreePaymentController = async (req, res) => {
     cart.map((i) => {
       total += i.price;
     });
+
+    // Handle empty cart edge case
+    if (total === 0) {
+      const order = await new orderModel({
+        products: cart,
+        payment: { amount: 0 },
+        buyer: req.user._id,
+      }).save();
+      return res.json({ ok: true });
+    }
+
     let newTransaction = gateway.transaction.sale(
       {
         amount: total,
@@ -504,7 +516,7 @@ export const brainTreePaymentController = async (req, res) => {
         },
       },
       async function (error, result) {
-        if (result) {
+        if (result && result.success) {
           const order = await new orderModel({
             products: cart,
             payment: result,
@@ -512,7 +524,7 @@ export const brainTreePaymentController = async (req, res) => {
           }).save();
           res.json({ ok: true });
         } else {
-          res.status(500).send(error);
+          res.status(500).send(error || result);
         }
       }
     );
