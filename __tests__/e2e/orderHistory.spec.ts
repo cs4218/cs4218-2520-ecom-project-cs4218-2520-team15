@@ -5,6 +5,8 @@
 import { test, expect, request } from '@playwright/test';
 import { TEST_USERS } from './fixtures/seedData.js';
 
+test.describe.configure({ mode: 'serial' });
+
 test.describe('S11 - Order history and details viewing', () => {
   const baseURL = 'http://localhost:3000';
   
@@ -15,7 +17,6 @@ test.describe('S11 - Order history and details viewing', () => {
   }
 
   test.beforeEach(async ({ page }) => {
-    // Clean up and re-seed database using test API
     const apiContext = await request.newContext();
     await apiContext.post('http://localhost:6060/api/v1/test/teardown');
     await apiContext.post('http://localhost:6060/api/v1/test/seed');
@@ -78,7 +79,6 @@ test.describe('S11 - Order history and details viewing', () => {
   });
 
   test('should display order details after creating order', async ({ page }) => {
-    // Use product index 0, card 4111111111111111
     await createTestOrder(page, 0, '4111111111111111');
     
     await page.waitForSelector('.border.shadow', { timeout: 10000 });
