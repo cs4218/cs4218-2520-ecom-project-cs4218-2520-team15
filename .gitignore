@@ -7,3 +7,8 @@ node_modules
 
 # Playwright
 /playwright/.auth/
+
+# SonarQube
+.scannerwork/
+
+coverage/

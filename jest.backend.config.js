@@ -10,6 +10,7 @@ export default {
 
   // jest code coverage
   collectCoverage: true,
+  coverageDirectory: "coverage/server",
   collectCoverageFrom: [
     "models/**",
     "controllers/**",
