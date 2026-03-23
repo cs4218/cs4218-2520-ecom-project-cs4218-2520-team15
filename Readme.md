@@ -221,6 +221,8 @@ https://github.com/cs4218/cs4218-2520-ecom-project-cs4218-2520-team15/actions/ru
 - Integration Tests
   - braintree.integration.test.js
   - genericCategory.integration.test.js
+  - categoryHook.integration.test.js
+  - cartPage.integration.test.js
 
 - UI Tests
   - addToCart.spec.ts
