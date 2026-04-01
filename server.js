@@ -9,6 +9,7 @@ import authRoutes from './routes/authRoute.js';
 import categoryRoutes from './routes/categoryRoutes.js';
 import productRoutes from './routes/productRoutes.js';
 import testRoutes from './routes/testRoutes.js';
+import { volumeSeedDatabase, volumeTeardownDatabase } from './controllers/volumeSeedController.js';
 import cors from "cors";
 
 // configure env
@@ -47,8 +48,11 @@ app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/category", categoryRoutes);
 app.use("/api/v1/product", productRoutes);
 
-if (process.env.NODE_ENV == 'ui-test') {
+// Make test routes available for E2E and performance testing (not in jest test mode)
+if (process.env.NODE_ENV === 'ui-test' || process.env.NODE_ENV === 'development') {
     app.use("/api/v1/test", testRoutes);
+    app.post("/api/v1/test/volume-seed", volumeSeedDatabase);
+    app.post("/api/v1/test/volume-teardown", volumeTeardownDatabase);
 }
 
 // rest api

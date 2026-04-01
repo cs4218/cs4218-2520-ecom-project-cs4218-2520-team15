@@ -15,7 +15,10 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",
-    "test:e2e:debug": "playwright test --debug"
+    "test:e2e:debug": "playwright test --debug",
+    "test:perf:smoke": "NODE_ENV=development STAGE=smoke k6 run performance/scripts/smoke.js",
+    "test:perf:baseline": "NODE_ENV=development STAGE=baseline k6 run performance/scripts/baseline.js",
+    "test:perf:volume": "NODE_ENV=development STAGE=volume k6 run performance/scripts/volume.js"
   },
   "keywords": [],
   "author": "RP",
