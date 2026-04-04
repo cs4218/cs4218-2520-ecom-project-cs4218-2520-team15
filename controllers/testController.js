@@ -7,8 +7,10 @@ import { hashPassword } from "../helpers/authHelper.js";
 
 import { TEST_CATEGORIES, TEST_ORDERS, TEST_PRODUCTS, TEST_USERS } from "../__tests__/e2e/fixtures/seedData.js";
 
+import { faker } from "@faker-js/faker";
 import fs from "fs";
 import path from "path";
+import slugify from "slugify";
 
 // Use process.cwd() for path resolution - works in both Jest (CommonJS) and Node.js (ES modules)
 const IMAGES_DIR = path.join(process.cwd(), "__tests__/e2e/fixtures/images");
@@ -209,5 +211,48 @@ export const checkSeededOrders = async (req, res) => {
   } catch (error) {
     console.error("Check orders error:", error);
     res.status(500).json({ success: false, message: "Check failed", error: error.message });
+  }
+};
+
+export const seedStressTestData = async (req, res) => {
+  try {
+    faker.seed(4218);
+    const { commerce } = faker;
+
+    const categories = [];
+    for (let i = 0; i < 10; i++) {
+      const name = commerce.department();
+      const category = await new categoryModel({
+        name: name,
+        slug: slugify(name),
+      }).save();
+      categories.push(category._id);
+    }
+
+    for (let i = 0; i < 300; i++) {
+      const name = commerce.productName();
+      await new productModel({
+        name,
+        slug: slugify(name),
+        description: commerce.productDescription(),
+        price: commerce.price(),
+        category: categories[Math.floor(Math.random() * categories.length)],
+        quantity: Math.floor(1 + Math.random() * 100),
+        shipping: !!Math.random(),
+        photo: {
+          data: Buffer.from("fake-image"),
+          contentType: "image/jpeg",
+        },
+      }).save();
+    }
+
+    res.status(200).json({ success: true });
+  } catch (error) {
+    console.error("Seed data for stress test error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Seeding failed",
+      error: error.message,
+    });
   }
 };
