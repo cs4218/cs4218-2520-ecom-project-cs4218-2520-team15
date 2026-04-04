@@ -6,15 +6,9 @@ import { check, sleep } from "k6";
 import http from "k6/http";
 import { Faker } from "k6/x/faker";
 
-/* Tester Notes:
- * - You may get an error when running this test script normally (i.e. `k6 run <file>`)
- *    - This test script uses the `xk6-faker` extension
- *    - The k6 documentation states that official extensions will be resolved on import
- *      (Source: https://grafana.com/docs/k6/latest/extensions/run)
- *    - However, it does not seem to always work
- * - If so, use the `k6` binary in the `performance/stress` directory
- *    - Assuming you are in the root directory
- *    - Run this test script with `./__tests__/performance/stress/k6 run <file>`
+/* Note:
+ * See README.md in `__tests__/peformance/stress` directory
+ * before running this test script.
  */
 
 export const options = {
@@ -47,9 +41,9 @@ export default function () {
   const data = {
     name: person.name(),
     email: person.email(),
-    password: internet.password(),
+    password: internet.password(true, true, true, true, false, 8),
     phone: person.phone(),
-    address: address.address(true, true, true, true, false, 8),
+    address: address.street(),
     answer: person.hobby(),
   };
 
@@ -75,4 +69,8 @@ export default function () {
   check(loginResponse, { "POST /login response OK": (r) => r.status === 200 });
 
   sleep(2);
+}
+
+export async function teardown(data) {
+  http.post("http://localhost:6060/api/v1/test/teardown");
 }
