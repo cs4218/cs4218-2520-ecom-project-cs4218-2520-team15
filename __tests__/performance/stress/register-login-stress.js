@@ -71,6 +71,6 @@ export default function () {
   sleep(2);
 }
 
-export async function teardown(data) {
+export function teardown(data) {
   http.post("http://localhost:6060/api/v1/test/teardown");
 }
