@@ -7,7 +7,6 @@ import { hashPassword } from "../helpers/authHelper.js";
 
 import { TEST_CATEGORIES, TEST_ORDERS, TEST_PRODUCTS, TEST_USERS } from "../__tests__/e2e/fixtures/seedData.js";
 
-import { faker } from "@faker-js/faker";
 import fs from "fs";
 import path from "path";
 import slugify from "slugify";
@@ -215,6 +214,7 @@ export const checkSeededOrders = async (req, res) => {
 };
 
 export const seedStressTestData = async (req, res) => {
+  const { faker } = await import("@faker-js/faker");
   try {
     faker.seed(4218);
     const { commerce } = faker;

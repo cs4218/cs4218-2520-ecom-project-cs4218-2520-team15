@@ -55,7 +55,7 @@ export const options = {
 
 const BASE_URL = "http://localhost:6060/api/v1/product";
 
-export function setup(data) {
+export function setup() {
   const response = http.post("http://localhost:6060/api/v1/test/seed/stress");
   const result = check(response, {
     "POST /seed/stress response OK": (r) => r.status == 200,
