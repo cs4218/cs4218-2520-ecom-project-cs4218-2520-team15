@@ -16,24 +16,23 @@ import cors from "cors";
 dotenv.config();
 
 //database config
-// only connect when not running tests; tests use an in-memory MongoDB and manage connection
-if (process.env.NODE_ENV !== 'test') {
-    if (process.env.NODE_ENV == 'ui-test') {
-        MongoMemoryServer.create().then(async (mongoServer) => {
-            process.env.MONGO_URL = mongoServer.getUri();
-            connectDB();
-
-            const cleanup = async () => {
-                await mongoose.disconnect();
-                await mongoServer.stop();
-                process.exit(0);
-            };
-            process.on('SIGTERM', cleanup);
-            process.on('SIGINT', cleanup);
-        });
-    } else {
+if (process.env.NODE_ENV == 'ui-test') {
+    // E2E tests: Use in-memory MongoDB for isolation and speed
+    MongoMemoryServer.create().then(async (mongoServer) => {
+        process.env.MONGO_URL = mongoServer.getUri();
         connectDB();
-    }
+
+        const cleanup = async () => {
+            await mongoose.disconnect();
+            await mongoServer.stop();
+            process.exit(0);
+        };
+        process.on('SIGTERM', cleanup);
+        process.on('SIGINT', cleanup);
+    });
+} else if (process.env.NODE_ENV !== 'test') {
+    // Performance testing and normal development: Use configured MongoDB
+    connectDB();
 }
 
 const app = express();
@@ -48,8 +47,13 @@ app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/category", categoryRoutes);
 app.use("/api/v1/product", productRoutes);
 
-// Make test routes available for E2E and performance testing (not in jest test mode)
-if (process.env.NODE_ENV === 'ui-test' || process.env.NODE_ENV === 'development') {
+// Make test routes available for E2E and performance testing
+// E2E: NODE_ENV=ui-test (uses in-memory MongoDB)
+// Performance: USE_TEST_DB=true with MONGO_TEST_URL (uses real test database)
+if (
+  process.env.NODE_ENV == "ui-test" ||
+  (process.env.USE_TEST_DB == "true" && process.env.MONGO_TEST_URL)
+) {
     app.use("/api/v1/test", testRoutes);
     app.post("/api/v1/test/volume-seed", volumeSeedDatabase);
     app.post("/api/v1/test/volume-teardown", volumeTeardownDatabase);

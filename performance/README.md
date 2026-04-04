@@ -41,10 +41,10 @@ All test scripts are located in the `./scripts/` directory. Each test is designe
 **IMPORTANT:** The server must be running before starting tests. In one terminal, run:
 
 ```bash
-NODE_ENV=development npm start
+USE_TEST_DB=true node server.js
 ```
 
-This sets `NODE_ENV=development` to enable the test endpoints (`/api/v1/test/seed`, `/api/v1/test/teardown`, etc.). The npm scripts automatically set this environment variable, but the server must also be started with it.
+This enables the test endpoints (`/api/v1/test/seed`, `/api/v1/test/volume-seed`, `/api/v1/test/volume-teardown`, etc.) and connects to the MongoDB test database specified by `MONGO_TEST_URL`. Make sure `MONGO_TEST_URL` is configured in your `.env` file.
 
 ### Smoke Test (Quick Sanity Check)
 
