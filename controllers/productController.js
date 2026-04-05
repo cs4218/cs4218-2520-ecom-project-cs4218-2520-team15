@@ -521,6 +521,7 @@ export const brainTreePaymentController = async (req, res) => {
       }).save();
       return res.json({ ok: true });
     }
+    total = total.toFixed(2);
 
     let newTransaction = gateway.transaction.sale(
       {
