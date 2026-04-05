@@ -56,8 +56,7 @@ export const volumeSeedDatabase = async (req, res) => {
           phone: `9${Math.random().toString().slice(2, 9).padEnd(7, "0")}`,
           address: `${i} Volume Street`,
           answer: "test",
-          role: 0,
-          volumeSeeded: true
+          role: 0
         })
       );
     }
@@ -70,9 +69,9 @@ export const volumeSeedDatabase = async (req, res) => {
 
     if (existingCategories.length < 3) {
       const categoriesToCreate = [
-        { name: "Electronics", slug: "electronics", volumeSeeded: true },
-        { name: "Clothing", slug: "clothing", volumeSeeded: true },
-        { name: "Books", slug: "books", volumeSeeded: true }
+        { name: "Electronics", slug: "electronics" },
+        { name: "Clothing", slug: "clothing" },
+        { name: "Books", slug: "books" }
       ];
 
       // Filter out categories that already exist by slug
@@ -108,8 +107,7 @@ export const volumeSeedDatabase = async (req, res) => {
             data: Buffer.from("volume-fake-image-data"),
             contentType: "image/png"
           },
-          shipping: Math.random() > 0.5,
-          volumeSeeded: true
+          shipping: Math.random() > 0.5
         })
       );
     }
@@ -145,13 +143,41 @@ export const volumeSeedDatabase = async (req, res) => {
           payment: {
             success: paymentSuccess,
             transactionId: generateTransactionId()
-          },
-          volumeSeeded: true
+          }
         })
       );
     }
     const createdOrdersData = await Promise.all(orderPromises);
     createdOrders.push(...createdOrdersData);
+
+    // Mark all seeded data with volumeSeeded flag using strict: false to bypass schema validation
+    const userIds = createdUsers.map(u => u._id);
+    const productIds = createdProducts.map(p => p._id);
+    const orderIds = createdOrders.map(o => o._id);
+
+    if (userIds.length > 0) {
+      await userModel.updateMany(
+        { _id: { $in: userIds } },
+        { $set: { volumeSeeded: true } },
+        { strict: false }
+      );
+    }
+
+    if (productIds.length > 0) {
+      await productModel.updateMany(
+        { _id: { $in: productIds } },
+        { $set: { volumeSeeded: true } },
+        { strict: false }
+      );
+    }
+
+    if (orderIds.length > 0) {
+      await orderModel.updateMany(
+        { _id: { $in: orderIds } },
+        { $set: { volumeSeeded: true } },
+        { strict: false }
+      );
+    }
 
     // Return success response
     return res.status(200).json({

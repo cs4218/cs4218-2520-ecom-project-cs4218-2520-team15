@@ -17,9 +17,14 @@ export function volumeSeed(level, volumeLevels) {
 
   const url = `${BASE_URL}/api/v1/test/volume-seed?orders=${volumeConfig.orders}&users=${volumeConfig.users}&products=${volumeConfig.products}`;
 
-  const res = http.post(url);
+  console.log(`Starting volume seed: ${volumeConfig.products} products, ${volumeConfig.users} users, ${volumeConfig.orders} orders...`);
+
+  const res = http.post(url, null, {
+    timeout: "600s" // Small: ~10-30s, Medium: ~2-3min, Large: ~10+ minutes
+  });
 
   if (res.status !== 200) {
+    console.error(`volumeSeed failed: status=${res.status}, body=${res.body}`);
     fail(`volumeSeed failed with status ${res.status}. Response: ${res.body}`);
   }
 
@@ -27,13 +32,16 @@ export function volumeSeed(level, volumeLevels) {
   try {
     responseBody = JSON.parse(res.body);
   } catch (error) {
+    console.error(`volumeSeed response parsing failed: ${res.body}`);
     fail(`Failed to parse volumeSeed response as JSON. Response: ${res.body}`);
   }
 
   if (!responseBody.created) {
+    console.error(`volumeSeed response missing created field: ${JSON.stringify(responseBody)}`);
     fail(`volumeSeed response does not contain created field. Response: ${JSON.stringify(responseBody)}`);
   }
 
+  console.log(`✓ Volume seed complete: ${responseBody.created.products} products, ${responseBody.created.users} users, ${responseBody.created.orders} orders`);
   return responseBody.created;
 }
 
@@ -45,7 +53,13 @@ export function volumeSeed(level, volumeLevels) {
 export function volumeTeardown() {
   const url = `${BASE_URL}/api/v1/test/volume-teardown`;
 
-  const res = http.post(url);
+  console.log(`volumeTeardown: Starting cleanup at ${url}`);
+
+  const res = http.post(url, null, {
+    timeout: "600s"
+  });
+
+  console.log(`volumeTeardown: Response status=${res.status}, body=${res.body}`);
 
   if (res.status !== 200) {
     fail(`volumeTeardown failed with status ${res.status}. Response: ${res.body}`);
@@ -55,12 +69,17 @@ export function volumeTeardown() {
   try {
     responseBody = JSON.parse(res.body);
   } catch (error) {
+    console.error(`volumeTeardown: Failed to parse response: ${res.body}`);
     fail(`Failed to parse volumeTeardown response as JSON. Response: ${res.body}`);
   }
 
+  console.log(`volumeTeardown: Parsed response: ${JSON.stringify(responseBody)}`);
+
   if (!responseBody.deleted) {
+    console.error(`volumeTeardown: Missing deleted field. Response: ${JSON.stringify(responseBody)}`);
     fail(`volumeTeardown response does not contain deleted field. Response: ${JSON.stringify(responseBody)}`);
   }
 
+  console.log(`volumeTeardown: Successfully deleted ${responseBody.deleted.users} users, ${responseBody.deleted.products} products, ${responseBody.deleted.orders} orders`);
   return responseBody.deleted;
 }
