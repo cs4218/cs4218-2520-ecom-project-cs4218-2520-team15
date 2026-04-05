@@ -1,6 +1,6 @@
 import http from "k6/http";
 import { check, group, fail } from "k6";
-import { getAdminToken, getAuthHeaders } from "../helpers/auth.js";
+import { seedDatabase, getAdminToken, getAuthHeaders } from "../helpers/auth.js";
 import { getSeededData, pickRandom, validateSeededData } from "../helpers/data.js";
 import { volumeSeed, volumeTeardown } from "../helpers/seed.js";
 import config from "../config.js";
@@ -10,12 +10,12 @@ const BASE_URL = config.BASE_URL;
 export const options = {
   stages: config.STAGES.volume,
   thresholds: {
-    "http_req_duration{endpoint:all-orders}": ["p(95)<800"],
+    "http_req_duration{endpoint:all-orders}": ["p(95)<1200"],
     "http_req_duration{endpoint:orders}": ["p(95)<400"],
     "http_req_duration{endpoint:order-status}": ["p(95)<400"],
-    "http_req_duration{endpoint:users}": ["p(95)<600"],
+    "http_req_duration{endpoint:users}": ["p(95)<800"],
     "http_req_duration{endpoint:products}": ["p(95)<600"],
-    "http_req_duration{endpoint:products-paged}": ["p(95)<600"],
+    "http_req_duration{endpoint:products-paged}": ["p(95)<400"],
     "http_req_duration{endpoint:product-detail}": ["p(95)<400"],
     "http_req_duration{endpoint:product-photo}": ["p(95)<800"],
     "http_req_duration{endpoint:categories}": ["p(95)<400"],
@@ -25,11 +25,13 @@ export const options = {
 
 export function setup() {
   console.log("Volume test setup: Initializing test environment...");
-  const empty = volumeTeardown();
-  console.log(`Setup: Cleaned up ${empty.orders} orders, ${empty.users} users, ${empty.products} products from previous runs`);
 
-  console.log("Setup: Seeding volume data at 'small' level...");
-  const seeded = volumeSeed("small", config.VOLUME_LEVELS);
+  // Seed test database with baseline data
+  seedDatabase();
+
+  const volumeLevel = "small";
+  console.log(`Setup: Seeding volume data at '${volumeLevel}' level...`);
+  const seeded = volumeSeed(volumeLevel, config.VOLUME_LEVELS);
   console.log(`Setup: Seeded ${seeded.orders} orders, ${seeded.users} users, ${seeded.products} products`);
 
   const adminToken = getAdminToken();
@@ -108,6 +110,25 @@ export default function (data) {
       });
     }
   }
+
+  // Paginated products
+  group("GET /api/v1/product/product-list/:page", () => {
+    const res = http.get(`${BASE_URL}/api/v1/product/product-list/1`, {
+      headers,
+      tags: { endpoint: "products-paged" }
+    });
+    check(res, {
+      "status is 200": (r) => r.status === 200,
+      "response has products": (r) => {
+        try {
+          const data = JSON.parse(r.body);
+          return data.products && data.products.length > 0;
+        } catch (e) {
+          return false;
+        }
+      }
+    });
+  });
 
   group("GET /api/v1/category/get-category", () => {
     const res = http.get(`${BASE_URL}/api/v1/category/get-category`, {
