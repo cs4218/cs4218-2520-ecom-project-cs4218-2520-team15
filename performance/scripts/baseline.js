@@ -282,3 +282,22 @@ export default function (data) {
     }
   }
 }
+
+function cleanupSeededData() {
+  try {
+    const res = http.post(`${BASE_URL}/api/v1/test/teardown`);
+    if (res.status === 200) {
+      console.log("✓ Seeded test data cleaned up successfully");
+    } else {
+      console.warn(`Cleanup warning: teardown returned status ${res.status}`);
+    }
+  } catch (error) {
+    console.warn(`Cleanup warning: Failed to clean up test data: ${error}`);
+  }
+}
+
+export function teardown() {
+  console.log("Baseline test teardown: Cleaning up test environment...");
+  cleanupSeededData();
+  console.log("✓ Baseline test teardown complete");
+}
