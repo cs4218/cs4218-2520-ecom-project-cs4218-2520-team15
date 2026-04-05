@@ -43,7 +43,7 @@
 import http from "k6/http";
 import { check, sleep, group } from "k6";
 import { Counter, Trend, Rate } from "k6/metrics";
-import { TEST_USERS } from "../e2e/fixtures/seedData.js";
+import { TEST_USERS } from "../../e2e/fixtures/seedData.js";
 
 const SEEDED_NORMAL = TEST_USERS.find((u) => u.role === 0) || TEST_USERS[1];
 const thinkSec = Number(__ENV.THINK_SEC || "3");

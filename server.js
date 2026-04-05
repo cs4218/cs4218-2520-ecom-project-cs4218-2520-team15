@@ -47,7 +47,7 @@ app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/category", categoryRoutes);
 app.use("/api/v1/product", productRoutes);
 
-if (process.env.NODE_ENV == 'ui-test') {
+if (process.env.NODE_ENV == 'ui-test'|| process.env.NODE_ENV === 'performance-test') {
     app.use("/api/v1/test", testRoutes);
 }
 

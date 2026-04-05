@@ -12,7 +12,7 @@
  * 1. Start test:
  *    K6_WEB_DASHBOARD=true K6_WEB_DASHBOARD_PERIOD=1s BASE_URL=http://localhost:6060 k6 run __tests__/performance/recovery/recovery-03-api-process-crash.js
  *
- * 2. Anytime during test (suggested: 1:30-2:00 mark):
+ * 2. Anytime during test (suggested: 1:30-2:00 mark) after products are logged:
  *    - Kill the Node.js process:
  *      * Terminal: Press Ctrl+C
  *      * Or: kill -9 <pid>

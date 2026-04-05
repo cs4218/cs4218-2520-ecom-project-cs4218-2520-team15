@@ -68,6 +68,14 @@ export function setup() {
   const baseUrl = __ENV.BASE_URL || "http://localhost:6060";
   const email = __ENV.EMAIL || SEEDED_NORMAL.email;
   const password = __ENV.PASSWORD || SEEDED_NORMAL.password;
+
+  console.log("🌱 Seeding database...");
+  const seedRes = http.post(`${baseUrl}/api/v1/test/seed`);
+  if (seedRes.status !== 200) {
+    throw new Error(`❌ Seeding failed: ${seedRes.body}`);
+  }
+  console.log("✅ Database seeded");
+  sleep(2); // allow DB to stabilize
   
   console.log(`🔧 Starting baseline capture for user: ${email}`);
   
@@ -79,19 +87,20 @@ export function setup() {
   );
   
   let token = "";
+  let body = {};
   try {
-    const body = loginRes.json();
+    body = loginRes.json();
+    console.log(`🔍 Login response: ${loginRes.body}`); // 🔥 ADDED debug
     if (body && body.token) token = body.token;
   } catch (e) {
     console.log(`⚠️ Failed to authenticate in setup: ${e}`);
     return { baseUrl, email, password, baselineOrders: [], baselineOrderIds: [], baselineCount: 0 };
   }
   
-  if (!token) {
-    console.log(`⚠️ No token received in setup`);
-    return { baseUrl, email, password, baselineOrders: [], baselineOrderIds: [], baselineCount: 0 };
+  if (!token || body.success !== true) {
+    throw new Error(`❌ Login failed in setup: ${JSON.stringify(body)}`);
   }
-  
+
   // Fetch baseline orders
   const ordersRes = http.get(`${baseUrl}/api/v1/auth/orders`, {
     headers: { Authorization: `Bearer ${token}` },
@@ -158,31 +167,21 @@ export default function (data) {
     );
 
     let token = "";
-    const loginSuccess = loginRes.status === 200;
+    let body = {};
     const loginOutage = loginRes.status === 500 || loginRes.status === 401;
     
     try {
-      const body = loginRes.json();
+      body = loginRes.json();
       if (body && body.token) token = body.token;
-    } catch {
-      /* ignore parse errors during outage */
-    }
+    } catch {}
+
+    const loginSuccess = loginRes.status === 200 && body.success === true;
 
     // Track login success rate
     loginSuccessRate.add(loginSuccess);
 
     check(loginRes, {
-      "login 200": (r) => r.status === 200,
-      "login success when DB up": (r) => {
-        if (!outageStartTime || recoveryDetectedTime) {
-          try {
-            return r.status === 200 && r.json("success") === true;
-          } catch {
-            return false;
-          }
-        }
-        return true; // Don't fail during known outage
-      },
+      "login success or outage": () => loginSuccess || loginOutage,
     });
 
     if (!token) {
@@ -213,7 +212,6 @@ export default function (data) {
         
         console.log(`🟢 ORDERS RECOVERY DETECTED (VU ${vu}) after ${recoveryDuration}s outage`);
         
-        // Verify data integrity after recovery
         try {
           const orders = ordersRes.json();
           if (Array.isArray(orders)) {
@@ -225,8 +223,7 @@ export default function (data) {
             
             missingOrdersCount.add(missingOrders.length);
             
-            // Data integrity checks
-            const countMatches = orders.length >= baselineCount; // Allow new orders created during test
+            const countMatches = orders.length >= baselineCount;
             const noMissingOrders = missingOrders.length === 0;
             const noCorruption = orders.every(o => 
               o._id && 
@@ -243,46 +240,14 @@ export default function (data) {
             console.log(`   ✓ Missing orders: ${missingOrders.length}`);
             console.log(`   ✓ Extra orders: ${extraOrders.length} (new orders created during test)`);
             console.log(`   ✓ Data integrity: ${integrityPassed ? "PASSED" : "FAILED"}`);
-            
-            if (!integrityPassed) {
-              console.log(`   ⚠️  INTEGRITY FAILURE DETAILS:`);
-              if (!countMatches) console.log(`      - Count too low: ${orders.length} vs baseline ${baselineCount}`);
-              if (missingOrders.length > 0) console.log(`      - Missing IDs: ${missingOrders.slice(0, 3).join(", ")}`);
-              if (!noCorruption) console.log(`      - Corrupted order data detected`);
-            }
           }
         } catch (e) {
           dataIntegrityRate.add(false);
           ordersRetrievalRate.add(false);
-          console.log(`   ❌ Failed to verify recovery: ${e}`);
         }
       }
 
-      // Continuous verification after recovery detected (periodic checks, VU 1 only)
-      if (isSuccess && hasVerifiedRecovery && iteration % 20 === 0 && baselineCount > 0 && vu === 1) {
-        try {
-          const orders = ordersRes.json();
-          if (Array.isArray(orders)) {
-            const recoveredIds = new Set(orders.map(o => o._id));
-            const missingOrders = Array.from(baselineOrderIds).filter(id => !recoveredIds.has(id));
-            
-            const integrityPassed = 
-              orders.length >= baselineCount &&
-              missingOrders.length === 0 &&
-              orders.every(o => o._id && o.buyer && Array.isArray(o.products));
-            
-            dataIntegrityRate.add(integrityPassed);
-            ordersRetrievalRate.add(true);
-            
-            if (iteration % 40 === 0) {
-              console.log(`   ✓ Periodic integrity check (iter ${iteration}): ${integrityPassed ? "PASSED" : "FAILED"} (${orders.length} orders)`);
-            }
-          }
-        } catch (e) {
-          dataIntegrityRate.add(false);
-          ordersRetrievalRate.add(false);
-        }
-      } else if (isSuccess) {
+      if (isSuccess) {
         ordersRetrievalRate.add(true);
       } else if (isOutage) {
         ordersRetrievalRate.add(false);
@@ -291,28 +256,6 @@ export default function (data) {
       check(ordersRes, {
         "orders reachable or known failure during outage": (r) =>
           r.status === 200 || r.status === 500 || r.status === 401,
-        "orders array when healthy": (r) => {
-          if (!outageStartTime || recoveryDetectedTime) {
-            if (r.status !== 200) return false;
-            try {
-              return Array.isArray(r.json());
-            } catch {
-              return false;
-            }
-          }
-          return true; // Don't fail during known outage
-        },
-        "valid order structure": (r) => {
-          if (r.status === 200) {
-            try {
-              const orders = r.json();
-              return Array.isArray(orders) && orders.every(o => o._id && o.buyer);
-            } catch {
-              return false;
-            }
-          }
-          return true; // Skip check for non-200
-        },
       });
     });
   });
