@@ -115,6 +115,25 @@ export default function (data) {
       });
     }
   }
+  
+  // Paginated products
+  group("GET /api/v1/product/product-list/:page", () => {
+    const res = http.get(`${BASE_URL}/api/v1/product/product-list/1`, {
+      headers,
+      tags: { endpoint: "products-paged" }
+    });
+    check(res, {
+      "status is 200": (r) => r.status === 200,
+      "response has products": (r) => {
+        try {
+          const data = JSON.parse(r.body);
+          return data.products && data.products.length > 0;
+        } catch (e) {
+          return false;
+        }
+      }
+    });
+  });
 
   group("GET /api/v1/category/get-category", () => {
     const res = http.get(`${BASE_URL}/api/v1/category/get-category`, {
