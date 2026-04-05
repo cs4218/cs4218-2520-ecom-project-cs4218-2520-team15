@@ -1,7 +1,7 @@
 /**
  * PROPER Recovery Test 5: Post-recovery "thundering herd"
  *
- * This is a TRUE recovery test that verifies:
+ * This is a recovery test that verifies:
  * ✅ System establishes baseline (captures known-good product state)
  * ✅ Cascading failure detection (both DB and process down)
  * ✅ Staged recovery tracking (DB restore → process restart → reconnection)
@@ -12,7 +12,7 @@
  *
  * Manual failure injection steps:
  * 1. Start test:
- *    K6_WEB_DASHBOARD=true K6_WEB_DASHBOARD_PERIOD=1s SPIKE_VUS=50 BASE_URL=http://localhost:6060 k6 __tests__/performance/recovery/run recovery-05-thundering-herd.js
+ *    K6_WEB_DASHBOARD=true K6_WEB_DASHBOARD_PERIOD=1s SPIKE_VUS=50 BASE_URL=http://localhost:6060 k6 run __tests__/performance/recovery/recovery-05-thundering-herd.js
  *
  * 2. At 1:00 mark (CASCADING FAILURE):
  *    a) Go to MongoDB Atlas → Network Access → Delete IP access entry

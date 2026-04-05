@@ -1,7 +1,7 @@
 /**
  * PROPER Recovery Test 3: API process crash under load
  *
- * This is a TRUE recovery test that verifies:
+ * This is a recovery test that verifies:
  * ✅ System establishes baseline (captures known-good product state)
  * ✅ Complete outage detection during process crash
  * ✅ Fast recovery after process restart

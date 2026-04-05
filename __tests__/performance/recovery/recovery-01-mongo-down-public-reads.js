@@ -1,7 +1,7 @@
 /**
  * PROPER Recovery Test 1: MongoDB outage during public product reads
  *
- * This is a TRUE recovery test that verifies:
+ * This is a recovery test that verifies:
  * ✅ System establishes baseline (captures known-good state)
  * ✅ Graceful degradation during outage
  * ✅ Data integrity after recovery (same products, no corruption)

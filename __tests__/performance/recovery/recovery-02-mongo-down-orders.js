@@ -1,7 +1,7 @@
 /**
  * PROPER Recovery Test 2: MongoDB outage during authenticated orders reads
  *
- * This is a TRUE recovery test that verifies:
+ * This is a recovery test that verifies:
  * ✅ System establishes baseline (captures known-good order state)
  * ✅ Graceful degradation during outage (no crashes, clean errors)
  * ✅ Data integrity after recovery (same orders, no corruption)
