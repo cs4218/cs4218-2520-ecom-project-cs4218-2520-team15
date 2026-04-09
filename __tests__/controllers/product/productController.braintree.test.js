@@ -4,13 +4,10 @@
 
 import { jest, describe, test, expect, beforeEach } from "@jest/globals";
 
-const mockGenerate = jest.fn();
-const mockSale = jest.fn();
-
 jest.mock("braintree", () => ({
   BraintreeGateway: jest.fn().mockImplementation(() => ({
-    clientToken: { generate: mockGenerate },
-    transaction: { sale: mockSale },
+    clientToken: { generate: jest.fn() },
+    transaction: { sale: jest.fn() },
   })),
   Environment: {
     Sandbox: "sandbox",
@@ -35,6 +32,7 @@ import {
   brainTreePaymentController,
 } from "../../../controllers/productController.js";
 import orderModel from "../../../models/orderModel.js";
+import braintree from "braintree";
 
 function createRes() {
   const res = {};
@@ -46,12 +44,16 @@ function createRes() {
 
 describe("braintreeTokenController", () => {
   let res;
+  let mockGenerate;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockGenerate.mockClear();
     res = createRes();
     jest.spyOn(console, "log").mockImplementation(() => {});
+    
+    // Get the mock instance
+    const gateway = new braintree.BraintreeGateway({});
+    mockGenerate = gateway.clientToken.generate;
   });
 
   test("returns 500 when gateway is not initialized (NODE_ENV=test)", async () => {
@@ -65,12 +67,16 @@ describe("braintreeTokenController", () => {
 
 describe("brainTreePaymentController", () => {
   let req, res;
+  let mockSale;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockSale.mockClear();
     res = createRes();
     jest.spyOn(console, "log").mockImplementation(() => {});
+    
+    // Get the mock instance
+    const gateway = new braintree.BraintreeGateway({});
+    mockSale = gateway.transaction.sale;
   });
 
   test("returns 500 when gateway is not initialized (NODE_ENV=test)", async () => {
