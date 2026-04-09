@@ -26,6 +26,10 @@ jobs:
         run: npm install
 
       - name: Run Backend Jest tests
+        env:
+          BRAINTREE_MERCHANT_ID: ${{ secrets.BRAINTREE_MERCHANT_ID }}
+          BRAINTREE_PUBLIC_KEY: ${{ secrets.BRAINTREE_PUBLIC_KEY }}
+          BRAINTREE_PRIVATE_KEY: ${{ secrets.BRAINTREE_PRIVATE_KEY }}
         run: npm run test:backend
 
       - name: Install client dependencies
