@@ -10,6 +10,7 @@ import { TEST_CATEGORIES, TEST_ORDERS, TEST_PRODUCTS, TEST_USERS } from "../__te
 import fs from "fs";
 import path from "path";
 import slugify from "slugify";
+import slugify from "slugify";
 
 // Use process.cwd() for path resolution - works in both Jest (CommonJS) and Node.js (ES modules)
 const IMAGES_DIR = path.join(process.cwd(), "__tests__/e2e/fixtures/images");
@@ -213,7 +214,7 @@ export const checkSeededOrders = async (req, res) => {
   }
 };
 
-export const seedSpikeDatabase = async (req, res) => {
+export const seedPerformanceDatabase = async (req, res) => {
   const { faker } = await import("@faker-js/faker");
   try {
     // Wipe all test collections
@@ -227,12 +228,12 @@ export const seedSpikeDatabase = async (req, res) => {
     // Create predictable users
     const createdUsers = [];
     for (let i = 0; i < 50; i++) {
-      const email = `spike_user_${i}@test.com`;
+      const email = `perf_user_${i}@test.com`;
       const password = `TempPassword${i}!`;
       const hashedPassword = await hashPassword(password);
 
       const user = await new userModel({
-        name: `Spike User ${i}`,
+        name: `Perf User ${i}`,
         email,
         password: hashedPassword,
         phone: `555-${String(1000 + i).padStart(4, '0')}`,
@@ -244,7 +245,7 @@ export const seedSpikeDatabase = async (req, res) => {
       createdUsers.push(user);
     }
 
-    console.log('✅ Spike users created:', createdUsers.length);
+    console.log('✅ Performance users created:', createdUsers.length);
 
     faker.seed(4218);
     const { commerce } = faker;
@@ -261,7 +262,7 @@ export const seedSpikeDatabase = async (req, res) => {
       createdCategories.push(category._id);
     }
 
-    console.log('✅ Spike categories created:', createdCategories.length);
+    console.log('✅ Performance categories created:', createdCategories.length);
 
     // Create products
     const createdProducts = [];
@@ -274,9 +275,9 @@ export const seedSpikeDatabase = async (req, res) => {
         slug: slugify(name),
         description: commerce.productDescription(),
         price,
-        category: createdCategories[Math.floor(Math.random() * createdCategories.length)],
-        quantity: Math.floor(1 + Math.random() * 100),
-        shipping: !!Math.random(),
+        category: faker.helpers.arrayElement(createdCategories),
+        quantity: faker.number.int({ min: 1, max: 100 }),
+        shipping: faker.datatype.boolean(),
         photo: {
           data: Buffer.from("fake-image"),
           contentType: "image/jpeg",
@@ -286,52 +287,25 @@ export const seedSpikeDatabase = async (req, res) => {
       createdProducts.push({ _id: product._id, price: product.price });
     }
 
-    console.log('✅ Spike products created:', createdProducts.length);
+    console.log('✅ Performance products created:', createdProducts.length);
 
     res.status(200).json({
       success: true,
-      message: "Spike data seeded successfully",
+      message: "Performance data seeded successfully",
+      users: createdUsers.map((user) => ({
+        _id: user._id,
+        email: user.email,
+        password: user.password,
+      })),
       products: createdProducts,
     });
 
   } catch (error) {
-    console.error("Spike seed database error:", error);
+    console.error("Performance seed database error:", error);
     res.status(500).json({
       success: false,
-      message: "Spike seed database failed",
+      message: "Performance seed database failed",
       error: error.message,
-    });
-  }
-};
-
-export const getSpikeTestUsers = async (req, res) => {
-  try {
-    const users = await userModel.find({ email: /^spike_user_/ }).select('email');
-
-    if (users.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: "No spike test users found. Run /spike-seed first."
-      });
-    }
-
-    // Return users with their predictable passwords
-    const testUsers = users.map((_, index) => ({
-      email: `spike_user_${index}@test.com`,
-      password: `TempPassword${index}!`
-    }));
-
-    res.status(200).json({
-      success: true,
-      count: testUsers.length,
-      users: testUsers
-    });
-  } catch (error) {
-    console.error("Get spike test users error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Get users failed",
-      error: error.message
     });
   }
 };
