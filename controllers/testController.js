@@ -211,3 +211,95 @@ export const checkSeededOrders = async (req, res) => {
     res.status(500).json({ success: false, message: "Check failed", error: error.message });
   }
 };
+
+export const seedPerformanceDatabase = async (req, res) => {
+  const { faker } = await import("@faker-js/faker");
+  try {
+    // Wipe all test collections
+    await Promise.all([
+      orderModel.deleteMany({}),
+      productModel.deleteMany({}),
+      categoryModel.deleteMany({}),
+      userModel.deleteMany({})
+    ]);
+
+    // Create predictable users
+    const createdUsers = [];
+    for (let i = 0; i < 50; i++) {
+      const email = `perf_user_${i}@test.com`;
+      const password = `TempPassword${i}!`;
+      const hashedPassword = await hashPassword(password);
+
+      const user = await new userModel({
+        name: `Perf User ${i}`,
+        email,
+        password: hashedPassword,
+        phone: `555-${String(1000 + i).padStart(4, '0')}`,
+        address: `${100 + i} Test Street`,
+        answer: "test",
+        role: 0
+      }).save();
+
+      createdUsers.push(user);
+    }
+
+    console.log('✅ Performance users created:', createdUsers.length);
+
+    faker.seed(4218);
+    const { commerce } = faker;
+
+    // Create categories
+    const createdCategories = [];
+    for (let i = 0; i < 10; i++) {
+      const name = commerce.department();
+      const category = await new categoryModel({
+        name: name,
+        slug: slugify(name),
+      }).save();
+
+      createdCategories.push(category._id);
+    }
+
+    console.log('✅ Performance categories created:', createdCategories.length);
+
+    // Create products
+    const createdProducts = [];
+    for (let i = 0; i < 300; i++) {
+      const name = commerce.productName();
+      // Ensure price is formatted to exactly 2 decimal places to avoid Braintree format errors
+      const price = parseFloat(commerce.price()).toFixed(2);
+      const product = await new productModel({
+        name,
+        slug: slugify(name),
+        description: commerce.productDescription(),
+        price,
+        category: createdCategories[Math.floor(Math.random() * createdCategories.length)],
+        quantity: Math.floor(1 + Math.random() * 100),
+        shipping: !!Math.random(),
+        photo: {
+          data: Buffer.from("fake-image"),
+          contentType: "image/jpeg",
+        },
+      }).save();
+
+      createdProducts.push({ _id: product._id, price: product.price });
+    }
+
+    console.log('✅ Performance products created:', createdProducts.length);
+
+    res.status(200).json({
+      success: true,
+      message: "Performance data seeded successfully",
+      users: createdUsers,
+      products: createdProducts,
+    });
+
+  } catch (error) {
+    console.error("Performance seed database error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Performance seed database failed",
+      error: error.message,
+    });
+  }
+};
