@@ -81,7 +81,11 @@ export function setup() {
 
   // Seed the performance database so we start from a known state
   console.log("🌱 Seeding performance database...");
-  const seedRes = http.post(`${baseUrl}/api/v1/test/performance-seed`);
+  const seedRes = http.post(
+    `${baseUrl}/api/v1/test/performance-seed`,
+    null,
+    { timeout: "5m" }
+  );
   if (seedRes.status !== 200) {
     exec.test.abort(`❌ Performance seeding failed: ${seedRes.body}`);
   }

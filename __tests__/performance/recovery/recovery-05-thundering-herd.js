@@ -93,7 +93,11 @@ export function setup() {
   const password = __ENV.PASSWORD || PERF_USER_PASSWORD;
   
   console.log("🌱 Seeding performance database...");
-  const seedRes = http.post(`${baseUrl}/api/v1/test/performance-seed`);
+  const seedRes = http.post(
+    `${baseUrl}/api/v1/test/performance-seed`,
+    null,
+    { timeout: "5m" }
+  );
   if (seedRes.status !== 200) {
     exec.test.abort(`❌ Performance seeding failed: ${seedRes.body}`);
   }
