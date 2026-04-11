@@ -47,9 +47,6 @@ app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/category", categoryRoutes);
 app.use("/api/v1/product", productRoutes);
 
-// Make test routes available for E2E and performance testing
-// E2E: NODE_ENV=ui-test (uses in-memory MongoDB)
-// Performance: USE_TEST_DB=true with MONGO_TEST_URL (uses real test database)
 if (
   process.env.NODE_ENV == "ui-test" ||
   (process.env.USE_TEST_DB == "true" && process.env.MONGO_TEST_URL)
