@@ -51,14 +51,19 @@ export const options = {
     "http_req_failed{scenario:search}": ["rate < 0.01"],
     "http_req_duration{scenario:search}": ["p(90) < 500"],
   },
+  setupTimeout: "120s",
 };
 
 const BASE_URL = "http://localhost:6060/api/v1/product";
 
 export function setup() {
-  const response = http.post("http://localhost:6060/api/v1/test/seed/stress");
+  const response = http.post(
+    "http://localhost:6060/api/v1/test/performance-seed",
+    {},
+    { timeout: "90s" },
+  );
   const result = check(response, {
-    "POST /seed/stress response OK": (r) => r.status == 200,
+    "POST /performance-seed response OK": (r) => r.status == 200,
   });
   if (!result) {
     exec.test.abort("Aborting test: Seed operation failed.");

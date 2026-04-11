@@ -213,45 +213,97 @@ export const checkSeededOrders = async (req, res) => {
   }
 };
 
-export const seedStressTestData = async (req, res) => {
+export const seedPerformanceDatabase = async (req, res) => {
   const { faker } = await import("@faker-js/faker");
   try {
+    // Wipe all test collections
+    await Promise.all([
+      orderModel.deleteMany({}),
+      productModel.deleteMany({}),
+      categoryModel.deleteMany({}),
+      userModel.deleteMany({})
+    ]);
+
+    // Create predictable users
+    const createdUsers = [];
+    for (let i = 0; i < 50; i++) {
+      const email = `perf_user_${i}@test.com`;
+      const password = `TempPassword${i}!`;
+      const hashedPassword = await hashPassword(password);
+
+      const user = await new userModel({
+        name: `Perf User ${i}`,
+        email,
+        password: hashedPassword,
+        phone: `555-${String(1000 + i).padStart(4, '0')}`,
+        address: `${100 + i} Test Street`,
+        answer: "test",
+        role: 0
+      }).save();
+
+      createdUsers.push(user);
+    }
+
+    console.log('✅ Performance users created:', createdUsers.length);
+
     faker.seed(4218);
     const { commerce } = faker;
 
-    const categories = [];
+    // Create categories
+    const createdCategories = [];
     for (let i = 0; i < 10; i++) {
       const name = commerce.department();
       const category = await new categoryModel({
         name: name,
         slug: slugify(name),
       }).save();
-      categories.push(category._id);
+
+      createdCategories.push(category._id);
     }
 
+    console.log('✅ Performance categories created:', createdCategories.length);
+
+    // Create products
+    const createdProducts = [];
     for (let i = 0; i < 300; i++) {
       const name = commerce.productName();
-      await new productModel({
+      // Ensure price is formatted to exactly 2 decimal places to avoid Braintree format errors
+      const price = parseFloat(commerce.price()).toFixed(2);
+      const product = await new productModel({
         name,
         slug: slugify(name),
         description: commerce.productDescription(),
-        price: commerce.price(),
-        category: categories[Math.floor(Math.random() * categories.length)],
-        quantity: Math.floor(1 + Math.random() * 100),
-        shipping: !!Math.random(),
+        price,
+        category: faker.helpers.arrayElement(createdCategories),
+        quantity: faker.number.int({ min: 1, max: 100 }),
+        shipping: faker.datatype.boolean(),
         photo: {
           data: Buffer.from("fake-image"),
           contentType: "image/jpeg",
         },
       }).save();
+
+      createdProducts.push({ _id: product._id, price: product.price });
     }
 
-    res.status(200).json({ success: true });
+    console.log('✅ Performance products created:', createdProducts.length);
+
+    res.status(200).json({
+      success: true,
+      message: "Performance data seeded successfully",
+      users: createdUsers.map((user) => ({
+        _id: user._id,
+        email: user.email,
+        password: user.password,
+      })),
+      products: createdProducts,
+    });
+
   } catch (error) {
-    console.error("Seed data for stress test error:", error);
+    console.error("Performance seed database error:", error);
     res.status(500).json({
       success: false,
-      message: "Seeding failed",
+      message: "Performance seed database failed",
       error: error.message,
     });
   }
