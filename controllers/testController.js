@@ -9,6 +9,7 @@ import { TEST_CATEGORIES, TEST_ORDERS, TEST_PRODUCTS, TEST_USERS } from "../__te
 
 import fs from "fs";
 import path from "path";
+import slugify from "slugify";
 
 // Use process.cwd() for path resolution - works in both Jest (CommonJS) and Node.js (ES modules)
 const IMAGES_DIR = path.join(process.cwd(), "__tests__/e2e/fixtures/images");
@@ -273,9 +274,9 @@ export const seedPerformanceDatabase = async (req, res) => {
         slug: slugify(name),
         description: commerce.productDescription(),
         price,
-        category: createdCategories[Math.floor(Math.random() * createdCategories.length)],
-        quantity: Math.floor(1 + Math.random() * 100),
-        shipping: !!Math.random(),
+        category: faker.helpers.arrayElement(createdCategories),
+        quantity: faker.number.int({ min: 1, max: 100 }),
+        shipping: faker.datatype.boolean(),
         photo: {
           data: Buffer.from("fake-image"),
           contentType: "image/jpeg",
@@ -290,7 +291,11 @@ export const seedPerformanceDatabase = async (req, res) => {
     res.status(200).json({
       success: true,
       message: "Performance data seeded successfully",
-      users: createdUsers,
+      users: createdUsers.map((user) => ({
+        _id: user._id,
+        email: user.email,
+        password: user.password,
+      })),
       products: createdProducts,
     });
 
