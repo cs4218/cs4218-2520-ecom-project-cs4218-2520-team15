@@ -279,7 +279,7 @@ export const seedPerformanceDatabase = async (req, res) => {
     for (let i = 0; i < 300; i++) {
       const name = commerce.productName();
       // Ensure price is formatted to exactly 2 decimal places to avoid Braintree format errors
-      const price = parseFloat(commerce.price()).toFixed(2);
+      const price = parseFloat(commerce.price({ max: 450 })).toFixed(2);
       const product = await new productModel({
         name,
         slug: slugify(name),

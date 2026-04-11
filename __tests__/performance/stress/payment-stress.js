@@ -3,6 +3,7 @@
  */
 
 import { check, sleep } from "k6";
+import exec from "k6/execution";
 import http from "k6/http";
 
 /* Note:
@@ -30,13 +31,17 @@ export const options = {
     http_req_failed: ["rate < 0.01"],
     http_req_duration: ["p(90) < 1000"],
   },
-  setupTimeout: "90s",
+  setupTimeout: "120s",
 };
 
 export function setup() {
-  const response = http.post("http://localhost:6060/api/v1/test/seed/stress");
+  const response = http.post(
+    "http://localhost:6060/api/v1/test/performance-seed",
+    {},
+    { timeout: "90s" },
+  );
   const result = check(response, {
-    "POST /seed/stress response OK": (r) => r.status == 200,
+    "POST /performance-seed OK": (r) => r.status == 200,
   });
   if (!result) {
     exec.test.abort("Aborting test: Seed operation failed.");

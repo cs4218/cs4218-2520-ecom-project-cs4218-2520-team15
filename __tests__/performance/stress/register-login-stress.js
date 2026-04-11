@@ -36,7 +36,7 @@ export const options = {
 };
 
 export default function () {
-  const BASE_URL = "http://localhost:6060/api/v1/auth/";
+  const BASE_URL = "http://localhost:6060/api/v1/auth";
   const { person, internet, address } = new Faker();
   const data = {
     name: person.name(),
