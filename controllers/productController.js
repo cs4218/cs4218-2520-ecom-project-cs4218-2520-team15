@@ -9,16 +9,31 @@ import slugify from "slugify";
 
 dotenv.config();
 
-//payment gateway
-var gateway;
-if (process.env.NODE_ENV !== "test" || (process.env.BRAINTREE_MERCHANT_ID && process.env.BRAINTREE_PUBLIC_KEY)) {
-  gateway = new braintree.BraintreeGateway({
-    environment: braintree.Environment.Sandbox,
-    merchantId: process.env.BRAINTREE_MERCHANT_ID,
-    publicKey: process.env.BRAINTREE_PUBLIC_KEY,
-    privateKey: process.env.BRAINTREE_PRIVATE_KEY,
-  });
+let gateway;
+
+// Only create gateway if Braintree is not mocked
+const isBraintreeMocked =
+  braintree.BraintreeGateway &&
+  braintree.BraintreeGateway._isMockFunction;
+
+if (!isBraintreeMocked) {
+  if (
+    process.env.BRAINTREE_MERCHANT_ID &&
+    process.env.BRAINTREE_PUBLIC_KEY &&
+    process.env.BRAINTREE_PRIVATE_KEY
+  ) {
+    gateway = new braintree.BraintreeGateway({
+      environment: braintree.Environment.Sandbox,
+      merchantId: process.env.BRAINTREE_MERCHANT_ID,
+      publicKey: process.env.BRAINTREE_PUBLIC_KEY,
+      privateKey: process.env.BRAINTREE_PRIVATE_KEY,
+    });
+  } else {
+    console.warn("Braintree env vars missing. Gateway not initialized.");
+  }
 }
+
+export { gateway };
 
 export const createProductController = async (req, res) => {
   try {
