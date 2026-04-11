@@ -8,7 +8,7 @@ import http from "k6/http";
 import { Faker } from "k6/x/faker";
 
 /* Note:
- * See README.md in `__tests__/peformance/stress` directory
+ * See README.md in `__tests__/performance/stress` directory
  * before running this test script.
  */
 
@@ -84,7 +84,7 @@ export function browse() {
 
 export function search() {
   const { product } = new Faker();
-  const searchKeyword = encodeURI(product.productName());
+  const searchKeyword = encodeURIComponent(product.productName());
 
   const pageResponse = http.get(`${BASE_URL}/search/${searchKeyword}`);
   check(pageResponse, {
@@ -106,6 +106,6 @@ export default function () {
    */
 }
 
-export function teardown(data) {
+export function teardown() {
   http.post("http://localhost:6060/api/v1/test/teardown");
 }
