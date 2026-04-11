@@ -68,3 +68,5 @@ if (process.env.NODE_ENV !== 'test') {
         console.log(`Server running on ${process.env.DEV_MODE} mode on ${PORT}`.bgCyan.white);
     });
 }
+
+export default app;
