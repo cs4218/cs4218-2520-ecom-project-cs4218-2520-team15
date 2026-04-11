@@ -47,8 +47,12 @@ app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/category", categoryRoutes);
 app.use("/api/v1/product", productRoutes);
 
-if (process.env.NODE_ENV == 'ui-test'|| process.env.NODE_ENV === 'performance-test') {
-    app.use("/api/v1/test", testRoutes);
+if (
+  process.env.NODE_ENV == "ui-test" ||
+  process.env.NODE_ENV === "performance-test" ||
+  (process.env.USE_TEST_DB == "true" && process.env.MONGO_TEST_URL)
+) {
+  app.use("/api/v1/test", testRoutes);
 }
 
 // rest api
