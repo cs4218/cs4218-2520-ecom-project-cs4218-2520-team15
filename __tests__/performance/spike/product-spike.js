@@ -64,7 +64,7 @@ export const options = {
 const BASE_URL = "http://localhost:6060/api/v1/product";
 
 export function setup() {
-  const seedResponse = http.post("http://localhost:6060/api/v1/test/spike-seed");
+  const seedResponse = http.post("http://localhost:6060/api/v1/test/performance-seed");
   check(seedResponse, { "Spike seed successful": (r) => r.status === 200 });
   return { startTime: Date.now() };
 }

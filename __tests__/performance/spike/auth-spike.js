@@ -130,14 +130,10 @@ export default function (data) {
 
 export function setup() {
   // Seed spike test users (50 users: spike_user_0 through spike_user_49)
-  const seedResponse = http.post("http://localhost:6060/api/v1/test/spike-seed");
+  const seedResponse = http.post("http://localhost:6060/api/v1/test/performance-seed");
   check(seedResponse, { "Spike seed successful": (r) => r.status === 200 });
-
-  // Fetch all spike test users
-  const getUsersResponse = http.get("http://localhost:6060/api/v1/test/spike-users");
-  check(getUsersResponse, { "Get spike users successful": (r) => r.status === 200 });
   
-  const data = JSON.parse(getUsersResponse.body);
+  const data = JSON.parse(seedResponse.body);
   if (data.success && data.users) {
     spikeUsers = data.users;
     console.log(`✅ Loaded ${spikeUsers.length} spike users for test`);

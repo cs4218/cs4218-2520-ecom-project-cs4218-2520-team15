@@ -51,7 +51,7 @@ export const options = {
 
 export function setup() {
   // Seed spike test database
-  const seedResponse = http.post("http://localhost:6060/api/v1/test/spike-seed");
+  const seedResponse = http.post("http://localhost:6060/api/v1/test/performance-seed");
   const seedCheck = check(seedResponse, { 
     "Spike seed successful": (r) => r.status === 200 
   });
@@ -78,20 +78,8 @@ export function setup() {
     exec.test.abort("Aborting test: No products available.");
   }
   
-  // Fetch spike test users
-  const getUsersResponse = http.get("http://localhost:6060/api/v1/test/spike-users");
-  const usersCheck = check(getUsersResponse, { 
-    "Get spike users successful": (r) => r.status === 200 
-  });
-  
-  if (!usersCheck) {
-    console.error(`Failed to get users: ${getUsersResponse.status}`);
-    exec.test.abort("Aborting test: Failed to get spike users.");
-  }
-  
-  const usersData = JSON.parse(getUsersResponse.body);
-  if (usersData.success && usersData.users) {
-    spikeUsers = usersData.users;
+  if (seedData.success && seedData.users) {
+    spikeUsers = seedData.users;
   } else {
     console.error("No users found in response");
     exec.test.abort("Aborting test: No users available.");
@@ -111,7 +99,7 @@ export function setup() {
       const loginData = JSON.parse(loginResponse.body);
       user.authToken = loginData.token;
     } else {
-      console.warn(`Failed to pre-auth user ${user.email}`);
+      console.warn(`Failed to pre-auth user ${user.email} - Status: ${loginResponse.status}`);
     }
     
     // Small delay to avoid overwhelming server during setup
@@ -183,7 +171,7 @@ export default function (data) {
       authToken = loginData.token;
       user.authToken = authToken; // Cache for future iterations
     } else {
-      console.warn(`Auth failed for user ${user.email}`);
+      console.error(`Auth failed for user ${user.email}. Status: ${loginResponse.status}, Body: ${loginResponse.body}`);
       sleep(1);
       return;
     }
@@ -235,6 +223,6 @@ export default function (data) {
   sleep(sleepTime);
 }
 
-export function teardown(data) {
+export function teardown() {
   http.post("http://localhost:6060/api/v1/test/teardown");
 }

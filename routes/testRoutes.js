@@ -8,7 +8,5 @@ router.post("/performance-seed", seedPerformanceDatabase);
 router.post("/teardown", teardownDatabase);
 router.get("/users", checkSeededUsers);
 router.get("/orders", checkSeededOrders);
-router.post("/spike-seed", seedSpikeDatabase);
-router.get("/spike-users", getSpikeTestUsers);
 
 export default router;
