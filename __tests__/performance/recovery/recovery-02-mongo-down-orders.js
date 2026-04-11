@@ -28,18 +28,18 @@
  * - Overall: <35% failed requests across entire test
  * - Recovery check: All baseline orders present after recovery
  *
- * Defaults: EMAIL/PASSWORD from __tests__/e2e/fixtures/seedData.js (TEST_USERS normal user).
- * Override with env: BASE_URL, EMAIL, PASSWORD.
+ * Uses performance-seeded user (perf_user_0@test.com / TempPassword0!)
+ * Override with env: BASE_URL, EMAIL, PASSWORD
  *
- * Run:
- *   BASE_URL=http://localhost:6060 k6 run recovery-02-mongo-down-orders-PROPER.js
  */
 import http from "k6/http";
 import { check, sleep, group } from "k6";
 import { Counter, Trend, Rate } from "k6/metrics";
-import { TEST_USERS } from "../../e2e/fixtures/seedData.js";
+import exec from "k6/execution";
 
-const SEEDED_NORMAL = TEST_USERS.find((u) => u.role === 0) || TEST_USERS[1];
+// Use performance-seeded user
+const PERF_USER_EMAIL = "perf_user_0@test.com";
+const PERF_USER_PASSWORD = "TempPassword0!";
 
 // Custom metrics for recovery tracking
 const recoveryTime = new Trend("recovery_time_seconds");
@@ -57,6 +57,7 @@ export const options = {
     { duration: "3m", target: 4 },      // ← DELETE IP at 3:00, propagation ~1.5m
     { duration: "5m", target: 4 },      // ← RE-ADD IP at 8:00, recovery by ~9:30, observe until 11:00
   ],
+  setupTimeout: "10m",
   thresholds: {
     http_req_failed: ["rate<0.35"],     // Max 35% failures during entire test
     data_integrity_passed: ["rate>0.95"], // 95%+ data integrity
@@ -66,16 +67,23 @@ export const options = {
 
 export function setup() {
   const baseUrl = __ENV.BASE_URL || "http://localhost:6060";
-  const email = __ENV.EMAIL || SEEDED_NORMAL.email;
-  const password = __ENV.PASSWORD || SEEDED_NORMAL.password;
+  const email = __ENV.EMAIL || PERF_USER_EMAIL;
+  const password = __ENV.PASSWORD || PERF_USER_PASSWORD;
 
-  console.log("🌱 Seeding database...");
-  const seedRes = http.post(`${baseUrl}/api/v1/test/seed`);
+  console.log("🌱 Seeding performance database...");
+  const seedRes = http.post(`${baseUrl}/api/v1/test/performance-seed`);
   if (seedRes.status !== 200) {
-    throw new Error(`❌ Seeding failed: ${seedRes.body}`);
+    exec.test.abort(`❌ Performance seeding failed: ${seedRes.body}`);
   }
-  console.log("✅ Database seeded");
-  sleep(2); // allow DB to stabilize
+  
+  try {
+    const seedBody = seedRes.json();
+    console.log(`✅ Performance database seeded: ${seedBody.users?.length || 0} users, ${seedBody.products?.length || 0} products`);
+  } catch (e) {
+    console.log("✅ Performance database seeded");
+  }
+  
+  sleep(2); // Allow DB to stabilize
   
   console.log(`🔧 Starting baseline capture for user: ${email}`);
   
@@ -90,15 +98,13 @@ export function setup() {
   let body = {};
   try {
     body = loginRes.json();
-    console.log(`🔍 Login response: ${loginRes.body}`); // 🔥 ADDED debug
     if (body && body.token) token = body.token;
   } catch (e) {
-    console.log(`⚠️ Failed to authenticate in setup: ${e}`);
-    return { baseUrl, email, password, baselineOrders: [], baselineOrderIds: [], baselineCount: 0 };
+    exec.test.abort(`⚠️ Failed to authenticate in setup: ${e}`);
   }
   
   if (!token || body.success !== true) {
-    throw new Error(`❌ Login failed in setup: ${JSON.stringify(body)}`);
+    exec.test.abort(`❌ Login failed in setup: ${JSON.stringify(body)}`);
   }
 
   // Fetch baseline orders

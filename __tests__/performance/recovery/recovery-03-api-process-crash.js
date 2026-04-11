@@ -9,7 +9,8 @@
  * ✅ Recovery metrics (time to recovery, immediate availability)
  *
  * Manual failure injection steps:
- * 1. Start test:
+ * 1. Start backend and then test:
+ *    NODE_ENV=performance-test npm start
  *    K6_WEB_DASHBOARD=true K6_WEB_DASHBOARD_PERIOD=1s BASE_URL=http://localhost:6060 k6 run __tests__/performance/recovery/recovery-03-api-process-crash.js
  *
  * 2. Anytime during test (suggested: 1:30-2:00 mark) after products are logged:
@@ -30,12 +31,11 @@
  * - Recovery time: <10 seconds after process start
  * - All baseline products present after recovery
  *
- * Run:
- *   BASE_URL=http://localhost:6060 k6 run recovery-03-api-process-crash-PROPER.js
  */
 import http from "k6/http";
 import { check, sleep, group } from "k6";
 import { Counter, Trend, Rate } from "k6/metrics";
+import exec from "k6/execution";
 
 const baseUrl = __ENV.BASE_URL || "http://localhost:6060";
 
@@ -53,6 +53,7 @@ const recoveryDetectedCounter = new Counter("recovery_detected");
 export const options = {
   vus: 5,
   duration: "5m",
+  setupTimeout: "10m",
   thresholds: {
     http_req_failed: ["rate<0.40"], // Max 40% failures (accounts for ~30s crash in 5min test)
     data_integrity_passed: ["rate>0.95"], // 95%+ data integrity
@@ -61,10 +62,18 @@ export const options = {
 };
 
 export function setup() {
+  console.log("🌱 Seeding performance database...");
+  const seedRes = http.post(`${baseUrl}/api/v1/test/performance-seed`);
+  if (seedRes.status !== 200) {
+    exec.test.abort(`❌ Performance seeding failed: ${seedRes.body}`);
+  }
+  console.log("✅ Performance database seeded");
+  sleep(2);
+
   console.log("🔧 Starting baseline capture...");
   
-  // Capture baseline product state
-  const productsRes = http.get(`${baseUrl}/api/v1/product/get-product`);
+  // Capture baseline product state - use product-list endpoint
+  const productsRes = http.get(`${baseUrl}/api/v1/product/product-list/1`);
   
   if (productsRes.status === 200) {
     try {
@@ -81,17 +90,12 @@ export function setup() {
         };
       }
     } catch (e) {
-      console.log(`⚠️ Failed to parse baseline in setup: ${e}`);
+      exec.test.abort(`⚠️ Failed to parse baseline in setup: ${e}`);
     }
   }
   
-  // Fallback if setup fails
-  console.log(`⚠️ Failed to capture baseline (API may be down)`);
-  return {
-    baselineProducts: [],
-    baselineProductIds: [],
-    baselineCount: 0
-  };
+  // Abort test if baseline capture fails - cannot proceed without known-good state
+  exec.test.abort(`❌ Failed to capture baseline (status ${productsRes.status}). Cannot proceed with recovery test.`);
 }
 
 // Global state for tracking
@@ -116,7 +120,7 @@ export default function (data) {
   }
 
   group("Product API Health", function () {
-    const products = http.get(`${baseUrl}/api/v1/product/get-product`);
+    const products = http.get(`${baseUrl}/api/v1/product/product-list/1`);
     
     const isSuccess = products.status === 200;
     const isOutage = products.status === 0 || products.status >= 500; // 0 = connection refused
@@ -215,7 +219,7 @@ export default function (data) {
     }
 
     check(products, {
-      "get-product 200 when API up": (r) => {
+      "product-list 200 when API up": (r) => {
         if (!outageStartTime || recoveryDetectedTime) {
           return r.status === 200;
         }

@@ -10,7 +10,7 @@
  *
  * Manual failure injection steps:
  * 1. Start test:
- *    K6_WEB_DASHBOARD=true K6_WEB_DASHBOARD_PERIOD=1s BASE_URL=http://localhost:6060 k6 run recovery-04-checkout-db-outage.js
+ *    K6_WEB_DASHBOARD=true K6_WEB_DASHBOARD_PERIOD=1s BASE_URL=http://localhost:6060 k6 run __tests__/performance/recovery/recovery-04-checkout-db-outage.js
  *
  * 2. At ~2:00 mark:
  *    - Go to MongoDB Atlas → Network Access
@@ -36,16 +36,19 @@
  * - NO partial orders in database
  * - All pre-outage orders still retrievable
  *
- * Run:
- *   BASE_URL=http://localhost:6060 k6 run recovery-04-checkout-db-outage.js
+ * Uses performance-seeded user (perf_user_0@test.com / TempPassword0!)
+ *
  */
 
 import http from "k6/http";
 import { check, sleep, group } from "k6";
 import { Counter, Trend, Rate } from "k6/metrics";
-import { TEST_USERS } from "../../e2e/fixtures/seedData.js";
+import exec from "k6/execution";
 
-const SEEDED_NORMAL = TEST_USERS.find((u) => u.role === 0) || TEST_USERS[1];
+// Use performance-seeded user
+const PERF_USER_EMAIL = "perf_user_0@test.com";
+const PERF_USER_PASSWORD = "TempPassword0!";
+
 const thinkSec = Number(__ENV.THINK_SEC || "3");
 
 // Custom metrics
@@ -58,6 +61,7 @@ const recoveryTime = new Trend("recovery_time_seconds");
 export const options = {
   vus: 2,
   duration: "8m",
+  setupTimeout: "10m",
   thresholds: {
     http_req_failed: ["rate<0.25"],
     order_retrieval_success: ["rate>0.90"],
@@ -70,18 +74,18 @@ export const options = {
 // ---------------------------------------------------------------------------
 export function setup() {
   const baseUrl = __ENV.BASE_URL || "http://localhost:6060";
-  const email = __ENV.EMAIL || SEEDED_NORMAL.email;
-  const password = __ENV.PASSWORD || SEEDED_NORMAL.password;
+  const email = __ENV.EMAIL || PERF_USER_EMAIL;
+  const password = __ENV.PASSWORD || PERF_USER_PASSWORD;
 
   console.log(`🔧 Test setup for user: ${email}`);
 
-  // Seed the database so we start from a known state
-  console.log("🌱 Seeding database...");
-  const seedRes = http.post(`${baseUrl}/api/v1/test/seed`);
+  // Seed the performance database so we start from a known state
+  console.log("🌱 Seeding performance database...");
+  const seedRes = http.post(`${baseUrl}/api/v1/test/performance-seed`);
   if (seedRes.status !== 200) {
-    throw new Error(`❌ Seeding failed: ${seedRes.body}`);
+    exec.test.abort(`❌ Performance seeding failed: ${seedRes.body}`);
   }
-  console.log("✅ Database seeded");
+  console.log("✅ Performance database seeded");
   sleep(2);
 
   // Login once to capture baseline order IDs
@@ -96,11 +100,11 @@ export function setup() {
     const body = loginRes.json();
     if (body && body.token) token = body.token;
   } catch (e) {
-    console.log(`⚠️ Login failed in setup: ${e}`);
+    exec.test.abort(`⚠️ Login failed in setup: ${e}`);
   }
 
   if (!token) {
-    throw new Error(`❌ Login failed in setup: ${loginRes.body}`);
+    exec.test.abort(`❌ Login failed in setup: ${loginRes.body}`);
   }
 
   // Fetch baseline orders — these must all still be present after recovery
@@ -184,11 +188,13 @@ export default function (data) {
 
     // -----------------------------------------------------------------------
     // Checkout (Order Creation)
+    // Use fake-valid-nonce from Braintree test documentation
+    // https://developer.paypal.com/braintree/docs/reference/general/testing/node#nonces
     // -----------------------------------------------------------------------
     group("Checkout (Order Creation)", function () {
       const payRes = http.post(
         `${data.baseUrl}/api/v1/product/braintree/payment`,
-        JSON.stringify({ nonce: "fake-not-used-for-total-zero", cart: [] }),
+        JSON.stringify({ nonce: "fake-valid-nonce", cart: [] }),
         {
           headers: {
             "Content-Type": "application/json",

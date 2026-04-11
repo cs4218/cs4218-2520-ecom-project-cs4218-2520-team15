@@ -42,19 +42,20 @@
  * - Overall: <30% failed requests, p95 < 5s
  * - All baseline products present after recovery
  *
- * Defaults: EMAIL/PASSWORD from seedData.js (normal user)
+ * Uses performance-seeded user (perf_user_0@test.com / TempPassword0!)
  * Override with env: BASE_URL, EMAIL, PASSWORD, SPIKE_VUS
- *
- * Run:
- *   SPIKE_VUS=50 BASE_URL=http://localhost:6060 k6 run recovery-05-thundering-herd-PROPER.js
+ * 
  */
 
 import http from "k6/http";
 import { check, sleep, group } from "k6";
 import { Counter, Trend, Rate } from "k6/metrics";
-import { TEST_USERS } from "../../e2e/fixtures/seedData.js";
+import exec from "k6/execution";
 
-const SEEDED_NORMAL = TEST_USERS.find((u) => u.role === 0) || TEST_USERS[1];
+// Use performance-seeded user
+const PERF_USER_EMAIL = "perf_user_0@test.com";
+const PERF_USER_PASSWORD = "TempPassword0!";
+
 const spikeVus = Number(__ENV.SPIKE_VUS || "50");
 
 // Custom metrics for recovery tracking
@@ -77,6 +78,7 @@ export const options = {
     { duration: "30s", target: spikeVus }, // ← Spike at 5:00 (thundering herd)
     { duration: "2m", target: 2 },       // Cool down, stability check
   ],
+  setupTimeout: "10m",
   thresholds: {
     http_req_failed: ["rate<0.30"],      // Max 30% failures
     http_req_duration: ["p(95)<5000"],   // Max 5s p95 latency
@@ -87,13 +89,21 @@ export const options = {
 
 export function setup() {
   const baseUrl = __ENV.BASE_URL || "http://localhost:6060";
-  const email = __ENV.EMAIL || SEEDED_NORMAL.email;
-  const password = __ENV.PASSWORD || SEEDED_NORMAL.password;
+  const email = __ENV.EMAIL || PERF_USER_EMAIL;
+  const password = __ENV.PASSWORD || PERF_USER_PASSWORD;
+  
+  console.log("🌱 Seeding performance database...");
+  const seedRes = http.post(`${baseUrl}/api/v1/test/performance-seed`);
+  if (seedRes.status !== 200) {
+    exec.test.abort(`❌ Performance seeding failed: ${seedRes.body}`);
+  }
+  console.log("✅ Performance database seeded");
+  sleep(2);
   
   console.log(`🔧 Starting baseline capture for user: ${email}`);
   
   // Capture baseline products
-  const productsRes = http.get(`${baseUrl}/api/v1/product/get-product`);
+  const productsRes = http.get(`${baseUrl}/api/v1/product/product-list/1`);
   
   let baselineProducts = [];
   let baselineProductIds = [];
@@ -110,8 +120,10 @@ export function setup() {
         console.log(`   Product IDs: ${baselineProductIds.slice(0, 3).join(", ")}...`);
       }
     } catch (e) {
-      console.log(`⚠️ Failed to parse baseline products: ${e}`);
+      exec.test.abort(`⚠️ Failed to parse baseline products: ${e}`);
     }
+  } else {
+    exec.test.abort(`❌ Failed to capture baseline (status ${productsRes.status}). Cannot proceed with recovery test.`);
   }
   
   return {
@@ -195,9 +207,8 @@ export default function (data) {
 
     group("Product API", function () {
       const startTime = Date.now();
-      const res = http.get(`${data.baseUrl}/api/v1/product/get-product`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      // Product list endpoint does not require authentication
+      const res = http.get(`${data.baseUrl}/api/v1/product/product-list/1`);
       const duration = Date.now() - startTime;
 
       const isSuccess = res.status === 200;
@@ -301,7 +312,7 @@ export default function (data) {
       }
 
       check(res, {
-        "get-product 200 when up": (r) => {
+        "product-list 200 when up": (r) => {
           if (!outageStartTime || recoveryDetectedTime) {
             return r.status === 200;
           }

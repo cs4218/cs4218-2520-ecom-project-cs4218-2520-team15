@@ -32,14 +32,12 @@
  * - Overall: <30% failed requests across entire test
  * - Recovery check: All baseline products present after recovery
  *
- * Run:
- *   BASE_URL=http://localhost:6060 k6 run recovery-01-mongo-down-public-reads-PROPER.js
  */
 
 import http from "k6/http";
 import { check, sleep, group } from "k6";
 import { Counter, Trend, Rate } from "k6/metrics";
-import { SharedArray } from "k6/data";
+import exec from "k6/execution";
 
 const baseUrl = __ENV.BASE_URL || "http://localhost:6060";
 
@@ -58,6 +56,7 @@ export const options = {
     { duration: "1m30s", target: 5 }, // Outage window (failures)
     { duration: "5m", target: 5 },    // RE-ADD IP at 5:00 → RECOVERY VERIFICATION
   ],
+  setupTimeout: "10m",
   thresholds: {
     http_req_failed: ["rate<0.30"],
     data_integrity_passed: ["rate>0.95"], // 95%+ data integrity (checked only at recovery + periodic)
@@ -70,9 +69,18 @@ let recoveryDetectedTime = null;
 let hasVerifiedRecovery = false; // Track if this VU already verified recovery
 
 export function setup() {
+  // Seed performance database first
+  console.log("🌱 Seeding performance database...");
+  const seedRes = http.post(`${baseUrl}/api/v1/test/performance-seed`);
+  if (seedRes.status !== 200) {
+    exec.test.abort(`❌ Performance seeding failed: ${seedRes.body}`);
+  }
+  console.log("✅ Performance database seeded");
+  sleep(2); // Allow DB to stabilize
+
   // Capture baseline in setup phase (runs once before test starts)
   console.log("🔧 Starting baseline capture...");
-  const res = http.get(`${baseUrl}/api/v1/product/get-product`);
+  const res = http.get(`${baseUrl}/api/v1/product/product-list/1`);
   
   if (res.status === 200) {
     try {
@@ -89,16 +97,12 @@ export function setup() {
         };
       }
     } catch (e) {
-      console.log(`⚠️ Failed to parse baseline in setup: ${e}`);
+      exec.test.abort(`⚠️ Failed to parse baseline in setup: ${e}`);
     }
   }
   
-  // Fallback if setup fails
-  return {
-    baselineProducts: [],
-    baselineProductIds: [],
-    baselineCount: 0
-  };
+  // Abort if baseline capture fails - test cannot proceed without it
+  exec.test.abort(`❌ Failed to capture baseline (status ${res.status}). Cannot proceed with recovery test.`);
 }
 
 export default function (data) {
@@ -117,7 +121,7 @@ export default function (data) {
   }
 
   group("Product Read Operations", function () {
-    const res = http.get(`${baseUrl}/api/v1/product/get-product`);
+    const res = http.get(`${baseUrl}/api/v1/product/product-list/1`);
     
     const isSuccess = res.status === 200;
     const isOutage = res.status === 500;
