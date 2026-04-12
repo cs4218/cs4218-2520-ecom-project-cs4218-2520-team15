@@ -508,9 +508,13 @@ export const brainTreePaymentController = async (req, res) => {
     
     const { nonce, cart } = req.body;
     let total = 0;
-    cart.map((i) => {
-      total += i.price;
+    cart.forEach((i) => {
+      total += parseFloat(i.price) || 0;
     });
+    
+    // FIX: Round to 2 decimals to avoid floating-point precision errors
+    // e.g., 827.68 becomes 827.6800000000001 when added
+    total = Math.round(total * 100) / 100;
 
     // Handle empty cart edge case
     if (total === 0) {
@@ -525,7 +529,7 @@ export const brainTreePaymentController = async (req, res) => {
 
     let newTransaction = gateway.transaction.sale(
       {
-        amount: total,
+        amount: total.toFixed(2),
         paymentMethodNonce: nonce,
         options: {
           submitForSettlement: true,
