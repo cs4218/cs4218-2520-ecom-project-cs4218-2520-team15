@@ -27,6 +27,7 @@
   "license": "ISC",
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
+    "@faker-js/faker": "^10.4.0",
     "bcrypt": "^5.1.1",
     "braintree": "^3.22.0",
     "colors": "^1.4.0",
