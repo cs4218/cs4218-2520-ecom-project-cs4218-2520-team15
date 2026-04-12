@@ -158,7 +158,7 @@ const HomePage = () => {
 
   // --------------- RENDER ---------------
   return (
-    <Layout title={"ALL Products - Best offers"}>
+    <Layout title={"All Products - Best offers"}>
       {/* banner image */}
       <img
         src="/images/Virtual.png"

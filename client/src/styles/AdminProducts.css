@@ -1,0 +1,52 @@
+.products-page {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
+    background-color: whitesmoke;
+}
+
+.products-page h1 {
+    color: silver;
+    font-family: "Playfair Display", serif;
+}
+
+.products-page .product-link {
+    flex: 1 1 18rem;
+    display: flex;
+}
+
+.products-page .card {
+    background-color: goldenrod;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.products-page .card-body {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+.products-page .card-name-price {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.products-page .card-price {
+    color: green;
+    font-weight: bold;
+}
+
+.products-page .card-text {
+    color: rgb(90, 89, 89);
+}
+
+.products-page .card img:hover {
+    transform: scale(0.9);
+}
+
+.products-page .card-img-top {
+    height: 300px !important;
+}

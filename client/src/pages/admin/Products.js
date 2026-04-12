@@ -4,6 +4,7 @@ import toast from "react-hot-toast";
 import { Link } from "react-router-dom";
 import AdminMenu from "../../components/AdminMenu";
 import Layout from "./../../components/Layout";
+import "../../styles/AdminProducts.css";
 
 const Products = () => {
   const [products, setProducts] = useState([]);
@@ -30,7 +31,7 @@ const Products = () => {
 
   return (
     <Layout title={"Dashboard - All Products"}>
-      <div className="container-fluid p-3">
+      <div className="container-fluid p-3 products-page">
         <div className="row">
           <div className="col-md-3">
             <AdminMenu />
@@ -43,7 +44,7 @@ const Products = () => {
                   <Link
                     key={p._id}
                     to={`/dashboard/admin/product/${p.slug}`}
-                    className="product-link"
+                    className="product-link m-2"
                   >
                     <div className="card m-2" style={{ width: "18rem" }}>
                       <img
@@ -52,8 +53,18 @@ const Products = () => {
                         alt={p.name}
                       />
                       <div className="card-body">
-                        <h5 className="card-title">{p.name}</h5>
-                        <p className="card-text">{p.description}</p>
+                        <div className="card-name-price">
+                          <h5 className="card-title">{p.name}</h5>
+                          <h5 className="card-title card-price">
+                            {p.price.toLocaleString("en-US", {
+                              style: "currency",
+                              currency: "USD",
+                            })}
+                          </h5>
+                        </div>
+                        <p className="card-text">
+                          {p.description}
+                        </p>
                       </div>
                     </div>
                   </Link>
