@@ -1,3 +1,7 @@
+/* Name: Mahadhir Bin Mohd Ismail
+ * Student No: A0252808B
+ */
+
 import http from 'k6/http';
 import { check, sleep } from 'k6';
 
