@@ -10,6 +10,7 @@ import { TEST_CATEGORIES, TEST_ORDERS, TEST_PRODUCTS, TEST_USERS } from "../__te
 import fs from "fs";
 import path from "path";
 import slugify from "slugify";
+import JWT from "jsonwebtoken";
 
 // Use process.cwd() for path resolution - works in both Jest (CommonJS) and Node.js (ES modules)
 const IMAGES_DIR = path.join(process.cwd(), "__tests__/e2e/fixtures/images");
@@ -247,6 +248,15 @@ export const seedPerformanceDatabase = async (req, res) => {
 
     console.log("✅ Performance users created:", createdUsers.length);
 
+    const hashedPassword = await hashPassword(TEST_USERS[1].password);
+    const user = await new userModel({
+      ...TEST_USERS[1],
+      password: hashedPassword,
+    }).save();
+    const token = JWT.sign({ _id: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "30min",
+    });
+
     faker.seed(4218);
     const { commerce } = faker;
 
@@ -269,7 +279,7 @@ export const seedPerformanceDatabase = async (req, res) => {
     for (let i = 0; i < 300; i++) {
       const name = commerce.productName();
       // Ensure price is formatted to exactly 2 decimal places to avoid Braintree format errors
-      const price = parseFloat(commerce.price()).toFixed(2);
+      const price = parseFloat(commerce.price({ max: 450 })).toFixed(2);
       const product = await new productModel({
         name,
         slug: slugify(name),
@@ -298,6 +308,7 @@ export const seedPerformanceDatabase = async (req, res) => {
         password: item.plaintextPassword,  // ← Return plaintext for spike tests
       })),
       products: createdProducts,
+      authToken: token,
     });
   } catch (error) {
     console.error("Performance seed database error:", error);

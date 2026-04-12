@@ -7,7 +7,7 @@ import http from "k6/http";
 import { Faker } from "k6/x/faker";
 
 /* Note:
- * See README.md in `__tests__/peformance/stress` directory
+ * See README.md in `__tests__/performance/stress` directory
  * before running this test script.
  */
 
@@ -36,7 +36,7 @@ export const options = {
 };
 
 export default function () {
-  const BASE_URL = "http://localhost:6060/api/v1/auth/";
+  const BASE_URL = "http://localhost:6060/api/v1/auth";
   const { person, internet, address } = new Faker();
   const data = {
     name: person.name(),
