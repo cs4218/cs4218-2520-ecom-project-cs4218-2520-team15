@@ -146,3 +146,14 @@ export const TEST_ORDERS = [
     status: "Not Processed",
   }
 ];
+
+export const VOLUME_SEED_CONFIG = {
+  statusDistribution: {
+    "Delivered": 0.50,
+    "Shipped": 0.20,
+    "Processing": 0.15,
+    "Not Processed": 0.10,
+    "Cancelled": 0.05
+  },
+  paymentSuccessRate: 0.90
+};
