@@ -149,7 +149,7 @@ export default function (data) {
   }
   
   // Get user for this VU
-  const user = users[__VU % users.length];
+  const user = users[(__VU - 1) % users.length];
   
   // Get or create auth token
   let authToken = user.authToken;

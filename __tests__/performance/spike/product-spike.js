@@ -91,7 +91,18 @@ export function browseSpike() {
   
   check(pageResponse, {
     "browse spike ok": (r) => r.status === 200,
-    "browse products ≤ 6": (r) => r.json().products.length <= 6,
+    "browse products ≤ 6": (r) => {
+      if (r.status !== 200) {
+        return false;
+      }
+
+      try {
+        const body = r.json();
+        return Array.isArray(body.products) && body.products.length <= 6;
+      } catch (e) {
+        return false;
+      }
+    },
   });
   
   // Minimal sleep to maximize spike load
