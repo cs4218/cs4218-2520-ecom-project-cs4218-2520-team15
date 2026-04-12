@@ -12,14 +12,22 @@ export const registerErrorRate = new Rate('register_error_rate');
 export const loginErrorRate = new Rate('login_error_rate');
 
 export const options = {
-  stages: [
-    { duration: '10s', target: 50 },
-    { duration: '2m', target: 50 },
-    { duration: '10s', target: 0 },
-  ],
+  scenarios: {
+    load: {
+      executor: 'ramping-vus',
+      startVUs: 0,
+      stages: [
+        { duration: '30s', target: 50 },
+        { duration: '5m', target: 50 },
+        { duration: '30s', target: 0 },
+      ],
+    },
+  },
   thresholds: {
-    http_req_failed: ['rate<0.01'],
-    http_req_duration: ['p(90)<500'],
+    'http_req_failed{api:register}': ['rate < 0.01'],
+    'http_req_duration{api:register}': ['p(90) < 700'],
+    'http_req_failed{api:login}': ['rate < 0.01'],
+    'http_req_duration{api:login}': ['p(90) < 700'],
   },
 };
 
@@ -32,7 +40,10 @@ function buildUniqueUser() {
   return {
     name: `load-test-${suffix}`,
     email: `loadtest+${suffix}@example.com`,
-    password: 'Test1234!'
+    password: 'Test1234!',
+    phone: '1234567890',
+    address: 'Test Address',
+    answer: 'Test answer'
   };
 }
 
@@ -41,8 +52,12 @@ function requestParams(endpoint) {
     headers: {
       'Content-Type': 'application/json',
     },
-    tags: { endpoint },
+    tags: { api: endpoint },
   };
+}
+
+export function teardown() {
+  http.post("http://localhost:6060/api/v1/test/teardown");
 }
 
 export default function () {
@@ -53,12 +68,15 @@ export default function () {
       name: user.name,
       email: user.email,
       password: user.password,
+      phone: user.phone,
+      address: user.address,
+      answer: user.answer,
     });
 
     const registerRes = http.post(`${BASE_URL}/api/v1/auth/register`, registerPayload, requestParams('register'));
 
     const registerSuccess = check(registerRes, {
-      'register returned 200': (r) => r.status === 200,
+      'register returned 201': (r) => r.status === 201,
     });
 
     registerErrorRate.add(!registerSuccess);

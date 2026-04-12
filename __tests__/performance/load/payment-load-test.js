@@ -8,14 +8,20 @@ import { check, sleep } from 'k6';
 const BASE_URL = 'http://localhost:6060';
 
 export const options = {
-  stages: [
-    { duration: '10s', target: 50 },
-    { duration: '2m', target: 50 },
-    { duration: '10s', target: 0 },
-  ],
+  scenarios: {
+    payment: {
+      executor: 'ramping-vus',
+      startVUs: 0,
+      stages: [
+        { duration: '30s', target: 50 },
+        { duration: '5m', target: 50 },
+        { duration: '30s', target: 0 },
+      ],
+    },
+  },
   thresholds: {
-    http_req_failed: ['rate<0.01'],
-    http_req_duration: ['p(90)<1000'],
+    'http_req_failed{api:payment}': ['rate < 0.01'],
+    'http_req_duration{api:payment}': ['p(90) < 1000'],
   },
   setupTimeout: '300s',
 };
@@ -79,7 +85,7 @@ function requestParams(endpoint) {
     headers: {
       'Content-Type': 'application/json',
     },
-    tags: { endpoint },
+    tags: { api: endpoint },
     timeout: '300s',
   };
 }

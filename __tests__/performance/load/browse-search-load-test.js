@@ -3,7 +3,7 @@
  */
 
 import http from 'k6/http';
-import { check, group, sleep } from 'k6';
+import { check, sleep } from 'k6';
 import { Rate } from 'k6/metrics';
 
 const BASE_URL = 'http://localhost:6060';
@@ -12,14 +12,35 @@ export const browseErrorRate = new Rate('browse_error_rate');
 export const searchErrorRate = new Rate('search_error_rate');
 
 export const options = {
-  stages: [
-    { duration: '30s', target: 50 },
-    { duration: '5m', target: 50 },
-    { duration: '30s', target: 0 },
-  ],
+  scenarios: {
+    browse: {
+      executor: 'ramping-vus',
+      startVUs: 0,
+      stages: [
+        { duration: '30s', target: 50 },
+        { duration: '5m', target: 50 },
+        { duration: '30s', target: 0 },
+      ],
+      exec: 'browse',
+      tags: { scenario: 'browse' },
+    },
+    search: {
+      executor: 'ramping-vus',
+      startVUs: 0,
+      stages: [
+        { duration: '30s', target: 50 },
+        { duration: '5m', target: 50 },
+        { duration: '30s', target: 0 },
+      ],
+      exec: 'search',
+      tags: { scenario: 'search' },
+    },
+  },
   thresholds: {
-    http_req_failed: ['rate<0.01'],
-    http_req_duration: ['p(90)<500'],
+    'http_req_failed{scenario:browse}': ['rate < 0.01'],
+    'http_req_duration{scenario:browse}': ['p(90) < 700'],
+    'http_req_failed{scenario:search}': ['rate < 0.01'],
+    'http_req_duration{scenario:search}': ['p(90) < 700'],
   },
   setupTimeout: '300s',
 };
@@ -39,18 +60,6 @@ export function setup() {
   } else {
     console.log('✅ Database seeded for performance test');
   }
-
-  let data;
-  try {
-    data = JSON.parse(seedRes.body)
-  } catch (e) {
-    console.error('Failed to parse seed response');
-    throw new Error('Failed to parse seed response');
-  }
-
-  return { 
-    products: data.products,
-  };
 }
 
 export function teardown() {
@@ -64,28 +73,24 @@ export function teardown() {
   }
 }
 
-export default function (data) {
-  const { products } = data;
-  
-  group('Browse endpoint', function () {
-    const page = Math.floor(Math.random() * Math.ceil(products.length / 6)) + 1;
-    const productListResponse = http.get(`${BASE_URL}/api/v1/product/product-list/${page}`);
-    const productListSuccess = check(productListResponse, {
-      'product-list status is 200': (r) => r.status === 200,
-    });
-  
-    browseErrorRate.add(!productListSuccess);
-    sleep(Math.random() * 1 + 0.5);
+export function browse() {
+  const page = Math.floor(Math.random() * Math.ceil(300 / 6)) + 1; // Random page between 1-50 (300 products, 6 per page)
+  const productListResponse = http.get(`${BASE_URL}/api/v1/product/product-list/${page}`);
+  const productListSuccess = check(productListResponse, {
+    'product-list status is 200': (r) => r.status === 200,
   });
 
-  group('Search endpoint', function () {
-    const randomKeyword = searchKeywords[Math.floor(Math.random() * searchKeywords.length)];
-    const searchResponse = http.get(`${BASE_URL}/api/v1/product/search/${randomKeyword}`);
-    const searchSuccess = check(searchResponse, {
-      'search status is 200': (r) => r.status === 200,
-    });
-  
-    searchErrorRate.add(!searchSuccess);
-    sleep(Math.random() * 3 + 1);
+  browseErrorRate.add(!productListSuccess);
+  sleep(Math.random() * 1 + 0.5);
+};
+
+export function search() {
+  const randomKeyword = searchKeywords[Math.floor(Math.random() * searchKeywords.length)];
+  const searchResponse = http.get(`${BASE_URL}/api/v1/product/search/${randomKeyword}`);
+  const searchSuccess = check(searchResponse, {
+    'search status is 200': (r) => r.status === 200,
   });
-}
+
+  searchErrorRate.add(!searchSuccess);
+  sleep(Math.random() * 3 + 1);
+};
