@@ -294,7 +294,7 @@ export const seedPerformanceDatabase = async (req, res) => {
       users: createdUsers.map((item) => ({
         _id: item.user._id,
         email: item.user.email,
-        password: item.plaintextPassword,
+        password: item.plaintextPassword,  // ← Return plaintext for spike tests
       })),
       products: createdProducts,
     });
