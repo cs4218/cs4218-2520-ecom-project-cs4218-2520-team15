@@ -214,14 +214,15 @@ export const checkSeededOrders = async (req, res) => {
 };
 
 export const seedPerformanceDatabase = async (req, res) => {
-  const { faker } = await import("@faker-js/faker");
   try {
+    const { faker } = await import("@faker-js/faker");
+
     // Wipe all test collections
     await Promise.all([
       orderModel.deleteMany({}),
       productModel.deleteMany({}),
       categoryModel.deleteMany({}),
-      userModel.deleteMany({})
+      userModel.deleteMany({}),
     ]);
 
     // Create predictable users
@@ -235,16 +236,16 @@ export const seedPerformanceDatabase = async (req, res) => {
         name: `Perf User ${i}`,
         email,
         password: hashedPassword,
-        phone: `555-${String(1000 + i).padStart(4, '0')}`,
+        phone: `555-${String(1000 + i).padStart(4, "0")}`,
         address: `${100 + i} Test Street`,
         answer: "test",
-        role: 0
+        role: 0,
       }).save();
 
       createdUsers.push({ user, plaintextPassword: password });
     }
 
-    console.log('✅ Performance users created:', createdUsers.length);
+    console.log("✅ Performance users created:", createdUsers.length);
 
     faker.seed(4218);
     const { commerce } = faker;
@@ -261,7 +262,7 @@ export const seedPerformanceDatabase = async (req, res) => {
       createdCategories.push(category._id);
     }
 
-    console.log('✅ Performance categories created:', createdCategories.length);
+    console.log("✅ Performance categories created:", createdCategories.length);
 
     // Create products
     const createdProducts = [];
@@ -286,7 +287,7 @@ export const seedPerformanceDatabase = async (req, res) => {
       createdProducts.push({ _id: product._id, price: product.price });
     }
 
-    console.log('✅ Performance products created:', createdProducts.length);
+    console.log("✅ Performance products created:", createdProducts.length);
 
     res.status(200).json({
       success: true,
@@ -298,7 +299,6 @@ export const seedPerformanceDatabase = async (req, res) => {
       })),
       products: createdProducts,
     });
-
   } catch (error) {
     console.error("Performance seed database error:", error);
     res.status(500).json({
