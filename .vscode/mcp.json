@@ -7,6 +7,11 @@
         "playwright",
         "run-test-mcp-server"
       ]
+    },
+    "k6": {
+      "type": "stdio",
+      "command": "mcp-k6",
+      "args": []
     }
   },
   "inputs": []
