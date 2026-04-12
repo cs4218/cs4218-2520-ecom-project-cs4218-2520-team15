@@ -57,6 +57,7 @@ export function setup() {
   
   if (seedRes.status !== 200) {
     console.error('❌ Failed to seed database:', seedRes.status, seedRes.body);
+    throw new Error(`Failed to seed database: ${seedRes.status}`);
   } else {
     console.log('✅ Database seeded for performance test');
   }
