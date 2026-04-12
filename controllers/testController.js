@@ -241,7 +241,7 @@ export const seedPerformanceDatabase = async (req, res) => {
         role: 0
       }).save();
 
-      createdUsers.push(user);
+      createdUsers.push({ user, plaintextPassword: password });
     }
 
     console.log('✅ Performance users created:', createdUsers.length);
@@ -291,10 +291,10 @@ export const seedPerformanceDatabase = async (req, res) => {
     res.status(200).json({
       success: true,
       message: "Performance data seeded successfully",
-      users: createdUsers.map((user) => ({
-        _id: user._id,
-        email: user.email,
-        password: user.password,
+      users: createdUsers.map((item) => ({
+        _id: item.user._id,
+        email: item.user.email,
+        password: item.plaintextPassword,  // ← Return plaintext for spike tests
       })),
       products: createdProducts,
     });

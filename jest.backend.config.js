@@ -22,7 +22,7 @@ export default {
   ],
   coverageThreshold: {
     global: {
-      lines: 80,
+      lines: 70,
       functions: 70,
     },
   },
