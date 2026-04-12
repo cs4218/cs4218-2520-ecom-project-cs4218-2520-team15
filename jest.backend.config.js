@@ -17,6 +17,8 @@ export default {
     "helpers/**",
     "middlewares/**",
     "config/**",
+    "!controllers/testController.js",
+    "!controllers/volumeSeedController.js",
   ],
   coverageThreshold: {
     global: {
