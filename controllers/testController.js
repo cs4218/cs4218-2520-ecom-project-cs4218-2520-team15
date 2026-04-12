@@ -241,7 +241,7 @@ export const seedPerformanceDatabase = async (req, res) => {
         role: 0
       }).save();
 
-      createdUsers.push(user);
+      createdUsers.push({ user, plaintextPassword: password });
     }
 
     console.log('✅ Performance users created:', createdUsers.length);
@@ -268,7 +268,7 @@ export const seedPerformanceDatabase = async (req, res) => {
     for (let i = 0; i < 300; i++) {
       const name = commerce.productName();
       // Ensure price is formatted to exactly 2 decimal places to avoid Braintree format errors
-      const price = parseFloat(commerce.price()).toFixed(2);
+      const price = parseFloat(commerce.price({ max: 450 })).toFixed(2);
       const product = await new productModel({
         name,
         slug: slugify(name),
@@ -291,10 +291,10 @@ export const seedPerformanceDatabase = async (req, res) => {
     res.status(200).json({
       success: true,
       message: "Performance data seeded successfully",
-      users: createdUsers.map((user) => ({
-        _id: user._id,
-        email: user.email,
-        password: user.password,
+      users: createdUsers.map((item) => ({
+        _id: item.user._id,
+        email: item.user.email,
+        password: item.plaintextPassword,
       })),
       products: createdProducts,
     });
