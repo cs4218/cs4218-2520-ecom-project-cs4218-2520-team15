@@ -9,30 +9,30 @@ import authRoutes from './routes/authRoute.js';
 import categoryRoutes from './routes/categoryRoutes.js';
 import productRoutes from './routes/productRoutes.js';
 import testRoutes from './routes/testRoutes.js';
+import { volumeSeedDatabase, volumeTeardownDatabase } from './controllers/volumeSeedController.js';
 import cors from "cors";
 
 // configure env
 dotenv.config();
 
 //database config
-// only connect when not running tests; tests use an in-memory MongoDB and manage connection
-if (process.env.NODE_ENV !== 'test') {
-    if (process.env.NODE_ENV == 'ui-test') {
-        MongoMemoryServer.create().then(async (mongoServer) => {
-            process.env.MONGO_URL = mongoServer.getUri();
-            connectDB();
-
-            const cleanup = async () => {
-                await mongoose.disconnect();
-                await mongoServer.stop();
-                process.exit(0);
-            };
-            process.on('SIGTERM', cleanup);
-            process.on('SIGINT', cleanup);
-        });
-    } else {
+if (process.env.NODE_ENV == 'ui-test') {
+    // E2E tests: Use in-memory MongoDB for isolation and speed
+    MongoMemoryServer.create().then(async (mongoServer) => {
+        process.env.MONGO_URL = mongoServer.getUri();
         connectDB();
-    }
+
+        const cleanup = async () => {
+            await mongoose.disconnect();
+            await mongoServer.stop();
+            process.exit(0);
+        };
+        process.on('SIGTERM', cleanup);
+        process.on('SIGINT', cleanup);
+    });
+} else if (process.env.NODE_ENV !== 'test') {
+    // Performance testing and normal development: Use configured MongoDB
+    connectDB();
 }
 
 const app = express();
@@ -51,7 +51,9 @@ if (
   process.env.NODE_ENV == "ui-test" ||
   (process.env.USE_TEST_DB == "true" && process.env.MONGO_TEST_URL)
 ) {
-  app.use("/api/v1/test", testRoutes);
+    app.use("/api/v1/test", testRoutes);
+    app.post("/api/v1/test/volume-seed", volumeSeedDatabase);
+    app.post("/api/v1/test/volume-teardown", volumeTeardownDatabase);
 }
 
 // rest api
