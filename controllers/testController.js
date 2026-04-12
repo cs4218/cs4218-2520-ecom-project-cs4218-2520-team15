@@ -10,6 +10,7 @@ import { TEST_CATEGORIES, TEST_ORDERS, TEST_PRODUCTS, TEST_USERS } from "../__te
 import fs from "fs";
 import path from "path";
 import slugify from "slugify";
+import JWT from "jsonwebtoken";
 
 // Use process.cwd() for path resolution - works in both Jest (CommonJS) and Node.js (ES modules)
 const IMAGES_DIR = path.join(process.cwd(), "__tests__/e2e/fixtures/images");
@@ -214,14 +215,15 @@ export const checkSeededOrders = async (req, res) => {
 };
 
 export const seedPerformanceDatabase = async (req, res) => {
-  const { faker } = await import("@faker-js/faker");
   try {
+    const { faker } = await import("@faker-js/faker");
+
     // Wipe all test collections
     await Promise.all([
       orderModel.deleteMany({}),
       productModel.deleteMany({}),
       categoryModel.deleteMany({}),
-      userModel.deleteMany({})
+      userModel.deleteMany({}),
     ]);
 
     // Create predictable users
@@ -235,16 +237,25 @@ export const seedPerformanceDatabase = async (req, res) => {
         name: `Perf User ${i}`,
         email,
         password: hashedPassword,
-        phone: `555-${String(1000 + i).padStart(4, '0')}`,
+        phone: `555-${String(1000 + i).padStart(4, "0")}`,
         address: `${100 + i} Test Street`,
         answer: "test",
-        role: 0
+        role: 0,
       }).save();
 
       createdUsers.push({ user, plaintextPassword: password });
     }
 
-    console.log('✅ Performance users created:', createdUsers.length);
+    console.log("✅ Performance users created:", createdUsers.length);
+
+    const hashedPassword = await hashPassword(TEST_USERS[1].password);
+    const user = await new userModel({
+      ...TEST_USERS[1],
+      password: hashedPassword,
+    }).save();
+    const token = JWT.sign({ _id: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "30min",
+    });
 
     faker.seed(4218);
     const { commerce } = faker;
@@ -261,7 +272,7 @@ export const seedPerformanceDatabase = async (req, res) => {
       createdCategories.push(category._id);
     }
 
-    console.log('✅ Performance categories created:', createdCategories.length);
+    console.log("✅ Performance categories created:", createdCategories.length);
 
     // Create products
     const createdProducts = [];
@@ -286,7 +297,7 @@ export const seedPerformanceDatabase = async (req, res) => {
       createdProducts.push({ _id: product._id, price: product.price });
     }
 
-    console.log('✅ Performance products created:', createdProducts.length);
+    console.log("✅ Performance products created:", createdProducts.length);
 
     res.status(200).json({
       success: true,
@@ -297,8 +308,8 @@ export const seedPerformanceDatabase = async (req, res) => {
         password: item.plaintextPassword,  // ← Return plaintext for spike tests
       })),
       products: createdProducts,
+      authToken: token,
     });
-
   } catch (error) {
     console.error("Performance seed database error:", error);
     res.status(500).json({

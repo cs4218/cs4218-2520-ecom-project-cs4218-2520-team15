@@ -5,7 +5,7 @@
 1. In your environment file, define the variable:
 
    ```
-   MONGO_TEST_URL = mongodb+srv://<username>:<password>@<host>/<db>?<options>
+   MONGO_TEST_URL=mongodb+srv://<username>:<password>@<host>/<db>?<options>
    ```
 
    where `<db>` is different from your development/product database; default is "test" if unspecified ([source](https://www.mongodb.com/docs/manual/reference/connection-string-formats/#connection-string-database-options)).
@@ -19,7 +19,7 @@
 ## Troubleshooting Test Scripts
 
 - You may get an error when running the test scripts normally (i.e. `k6 run <file>`).
-  - The test scripts uses the `xk6-faker` extension.
+  - Some of the test scripts use the `xk6-faker` extension.
   - The k6 documentation states that official extensions will be resolved on import
     ([source](https://grafana.com/docs/k6/latest/extensions/run)).
   - However, it does not seem to always work.
