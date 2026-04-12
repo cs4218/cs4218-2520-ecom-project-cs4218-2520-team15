@@ -152,7 +152,10 @@ describe("Integration tests for frontend authentication components", () => {
             const storedAuth = JSON.parse(localStorage.getItem("auth"));
             expect(storedAuth.user).toMatchObject(mockUser);
             expect(storedAuth.token).toMatch(mockToken);
-            expect(axios.defaults.headers.common["Authorization"]).toBe(mockToken);
+            
+            await waitFor(() => {
+                expect(axios.defaults.headers.common["Authorization"]).toBe(mockToken);
+            });
         });
 
         it("should display error message on failed login", async () => {
