@@ -511,6 +511,7 @@ export const brainTreePaymentController = async (req, res) => {
     cart.map((i) => {
       total += i.price;
     });
+    total = total.toFixed(2);
 
     // Handle empty cart edge case
     if (total === 0) {
