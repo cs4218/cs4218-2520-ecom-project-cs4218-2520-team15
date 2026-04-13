@@ -229,6 +229,54 @@ https://github.com/cs4218/cs4218-2520-ecom-project-cs4218-2520-team15/actions/ru
   - checkoutPayment.spec.ts
   - orderHistory.spec.ts
 
+## Project Milestone 3 (MS3)
+
+### Mahadhir Bin Mohd Ismail, A0252808B
+
+- Load Tests
+  - browse-search-load-test.js
+  - payment-load-test.js
+  - registration-login-load-test.js
+
+---
+
+### Lee Guan Kai Delon, A0273286W
+
+- Stress Tests
+  - browse-search-stress.js
+  - payment-stress.js
+  - register-login-stress.js
+
+---
+
+### Kok Fangyu Inez, A0258672R
+
+- Spike Tests
+  - auth-spike.js
+  - checkout-spike.js
+  - product-spike.js
+
+---
+
+### Lim Jin Yin, A0256976H
+
+- Volume Tests
+  - baseline.js
+  - smoke.js
+  - volume.js
+  - analyzeResults.js
+
+---
+
+### Tan Qin Xu, A0213002J
+
+- Recovery Tests
+  - recovery-01-mongo-down-public-reads.js
+  - recovery-02-mongo-down-orders.js
+  - recovery-03-api-process-crash.js
+  - recovery-04-checkout-db-outage.js
+  - recovery-05-thundering-herd.js
+
 ## 1. Project Introduction
 
 Virtual Vault is a full-stack MERN (MongoDB, Express.js, React.js, Node.js) e-commerce website, offering seamless connectivity and user-friendly features. The platform provides a robust framework for online shopping. The website is designed to adapt to evolving business needs and can be efficiently extended.
